@@ -1,0 +1,27 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Frontend build output
+tutor-finder/dist/
+tutor-finder/dist-ssr/
+
+# Backend runtime files
+tutor-finder-backend/uploads/*
+!tutor-finder-backend/uploads/.gitkeep
+
+# Logs and local files
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+.DS_Store
+.vscode/
+.idea/
+
+# Local Git metadata inside the monorepo
+# Remove the child .git directories before committing the source.
