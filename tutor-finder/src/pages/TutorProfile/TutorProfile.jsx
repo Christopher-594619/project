@@ -8,6 +8,7 @@ import BookingModal from './components/BookingModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { tutorService } from '../../services/tutorService';
+import { useLiveLocation } from '../../hooks/useLiveLocation';
 
 const TutorProfile = () => {
   const { id } = useParams();
@@ -16,24 +17,33 @@ const TutorProfile = () => {
   const [tutor, setTutor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
-
-    const { user } = useAuth();
+  const { user } = useAuth();
+  const { location: studentLocation } = useLiveLocation(Boolean(user));
 
   useEffect(() => {
-    const loadTutor = async () => {
-      setLoading(true);
+    let isMounted = true;
+
+    const loadTutor = async (showLoading = false) => {
+      if (showLoading && !tutor) setLoading(true);
       try {
-        const data = await tutorService.getTutorById(id);
-        setTutor(data);
+        const data = await tutorService.getTutorById(id, studentLocation);
+        if (isMounted) setTutor(data);
       } catch (error) {
         console.error('Error loading tutor:', error);
-        setTutor(null);
+        if (isMounted) setTutor(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
-    loadTutor();
-  }, [id]);
+
+    loadTutor(true);
+
+    const refreshTimer = window.setInterval(() => loadTutor(false), 15000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshTimer);
+    };
+  }, [id, studentLocation]);
 
   useEffect(() => {
     // Check if we should open booking modal from URL
@@ -90,7 +100,7 @@ const TutorProfile = () => {
           />
 
           {/* Profile Info */}
-          <ProfileInfo tutor={tutor} />
+          <ProfileInfo tutor={tutor} studentLocation={studentLocation} />
 
           {/* Reviews Section */}
           <ReviewsSection 
@@ -98,7 +108,7 @@ const TutorProfile = () => {
             tutorId={tutor.id}
             onReviewAdded={() => {
               // Refresh reviews
-              tutorService.getTutorById(id).then(setTutor);
+              tutorService.getTutorById(id, studentLocation).then(setTutor);
             }}
           />
         </div>

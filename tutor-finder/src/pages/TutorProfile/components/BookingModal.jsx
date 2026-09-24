@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaTimes, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { bookingService } from '../../../services/bookingService';
 
 const BookingModal = ({ isOpen, onClose, tutor }) => {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
     { value: '120', label: '2 hours' },
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!user) {
@@ -49,17 +50,28 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
 
     setIsSubmitting(true);
 
-    // Simulate booking
-    setTimeout(() => {
-      toast.success(`Booking confirmed with ${tutor.name}!`);
+    try {
+      await bookingService.createBooking({
+        tutorUserId: tutor.userId,
+        tutorName: tutor.name,
+        studentName: user.name || user.email,
+        date: selectedDate,
+        time: selectedTime,
+        duration: selectedDuration,
+        notes: notes.trim(),
+      });
+
+      toast.success(`Booking request sent to ${tutor.name}!`);
       setIsSubmitting(false);
       onClose();
-      // Reset form
       setSelectedDate('');
       setSelectedTime('');
       setSelectedDuration('60');
       setNotes('');
-    }, 1500);
+    } catch (error) {
+      toast.error(error.message || 'Failed to send booking request');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,6 +89,8 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
               <p className="text-sm text-gray-500 mt-1">with {tutor.name}</p>
             </div>
             <button
+              type="button"
+              aria-label="Close booking dialog"
               onClick={onClose}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -100,11 +114,13 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
 
             {/* Date Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="booking-date" className="block text-sm font-medium text-gray-700 mb-2">
                 <FaCalendarAlt className="inline mr-2 text-primary-500" />
                 Select Date
               </label>
               <input
+                id="booking-date"
+                name="date"
                 type="date"
                 min={format(new Date(), 'yyyy-MM-dd')}
                 value={selectedDate}
@@ -115,11 +131,11 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
             </div>
 
             {/* Time Selection */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">
                 <FaClock className="inline mr-2 text-primary-500" />
                 Select Time
-              </label>
+              </legend>
               <div className="grid grid-cols-3 gap-2">
                 {availableTimes.map((time) => (
                   <button
@@ -138,14 +154,16 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* Duration Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="booking-duration" className="block text-sm font-medium text-gray-700 mb-2">
                 Duration
               </label>
               <select
+                id="booking-duration"
+                name="duration"
                 value={selectedDuration}
                 onChange={(e) => setSelectedDuration(e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -160,10 +178,12 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="booking-notes" className="block text-sm font-medium text-gray-700 mb-2">
                 Additional Notes (Optional)
               </label>
               <textarea
+                id="booking-notes"
+                name="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows="3"

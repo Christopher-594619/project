@@ -12,6 +12,9 @@ const {users} = require("./routes/users")
 const {public} = require("./routes/public");
 const {auth} = require("./routes/signup")
 const {tutors}= require("./routes/tutors");
+const { notifications } = require("./routes/notifications");
+const { authenticate } = require("./controller/auth/authenticate");
+const { createBookingNotification } = require("./controller/users/notifications");
 
 
 const app = express();
@@ -41,6 +44,8 @@ app.use("/", public);
 app.use("/api/auth", auth);
 app.use("/api/users", users)
 app.use("/api/tutors", tutors)
+app.post("/api/bookings", authenticate, createBookingNotification);
+app.use("/api/notifications", notifications);
 
 app.get(/.*/, (req, res) => {
   // Skip API routes (should already be handled above)

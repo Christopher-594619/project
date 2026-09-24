@@ -47,8 +47,8 @@ export const tutorService = {
   },
 
   // ==================== GET TUTOR BY ID ====================
-  getTutorById: async (id) => {
-    const coords = await getUserLocation();
+  getTutorById: async (id, currentLocation = null) => {
+    const coords = currentLocation || await getUserLocation();
     const queryParams = new URLSearchParams();
     if (coords) {
       queryParams.append('lat', coords.lat);

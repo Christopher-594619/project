@@ -110,12 +110,15 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
         <div className="mb-8 p-4 border border-gray-200 rounded-xl bg-gray-50">
           <h3 className="font-medium text-gray-900 mb-3">Write a Review</h3>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-1">Rating</legend>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
+                    type="button"
+                    aria-label={`Rate ${star} out of 5 stars`}
+                    aria-pressed={rating === star}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     onClick={() => setRating(star)}
@@ -132,10 +135,12 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
                   {rating > 0 ? `${rating} stars` : 'Select rating'}
                 </span>
               </div>
-            </div>
+            </fieldset>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+              <label htmlFor="review-comment" className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
               <textarea
+                id="review-comment"
+                name="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows="3"
