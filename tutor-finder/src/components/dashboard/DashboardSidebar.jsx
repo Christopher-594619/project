@@ -10,17 +10,14 @@ import {
   FaUser,
   FaCog,
   FaSignOutAlt,
-  FaUsers,
-  FaMoneyBillWave,
   FaArrowUp
 } from 'react-icons/fa';
-import GetLocationButton from '../../pages/TutorDashboard/components/GetLocationButton';
 
-const DashboardSidebar = ({ userType }) => {
+const DashboardSidebar = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
-  const studentLinks = [
+  const links = [
     { to: '/dashboard/student', icon: FaHome, label: 'Overview' },
     { to: '/dashboard/student/lessons', icon: FaCalendarAlt, label: 'My Lessons' },
     { to: '/search', icon: FaBook, label: 'Find Tutors' },
@@ -30,18 +27,6 @@ const DashboardSidebar = ({ userType }) => {
     { to: '/dashboard/student/settings', icon: FaCog, label: 'Settings' },
     { to: '/dashboard/student/become-tutor', icon: FaArrowUp, label: 'Become a Tutor' },
   ];
-
-  const tutorLinks = [
-    { to: '/dashboard/tutor', icon: FaHome, label: 'Overview' },
-    { to: '/dashboard/tutor/bookings', icon: FaCalendarAlt, label: 'Bookings' },
-    { to: '/dashboard/tutor/earnings', icon: FaMoneyBillWave, label: 'Earnings' },
-    { to: '/dashboard/tutor/students', icon: FaUsers, label: 'Students' },
-    { to: '/messages', icon: FaComment, label: 'Messages' },
-    { to: '/dashboard/tutor/profile', icon: FaUser, label: 'Profile' },
-    { to: '/dashboard/tutor/settings', icon: FaCog, label: 'Settings' },
-  ];
-
-  const links = userType === 'tutor' ? tutorLinks : studentLinks;
 
   return (
     <aside className="w-64 min-w-64 flex-shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto overflow-x-hidden hidden md:block">
@@ -66,8 +51,8 @@ const DashboardSidebar = ({ userType }) => {
               {user?.email || 'User'}
             </p>
 
-            <p className="text-xs text-gray-500 capitalize truncate">
-              {userType}
+            <p className="text-xs text-gray-500 truncate">
+              Student
             </p>
           </div>
         </div>
@@ -114,8 +99,6 @@ const DashboardSidebar = ({ userType }) => {
 
         {/* Bottom actions */}
         <div className="border-t border-gray-200 mt-6 pt-6 min-w-0">
-          <GetLocationButton />
-
           <button
             onClick={logout}
             className="flex items-center gap-3 px-4 py-2.5 w-full min-w-0 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all duration-200"

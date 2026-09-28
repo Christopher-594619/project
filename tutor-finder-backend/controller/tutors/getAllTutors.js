@@ -40,6 +40,7 @@ const getAllTutors = async (req, res) => {
                 tp.*,
 
                 u.id AS user_id,
+                u.name AS tutor_name,
                 u.email AS tutor_email,
                 u.phone AS tutor_phone,
                 tp.bio AS tutor_bio,

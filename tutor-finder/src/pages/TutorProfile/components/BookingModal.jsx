@@ -4,10 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { FaTimes, FaCalendarAlt, FaClock } from 'react-icons/fa';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import { bookingService } from '../../../services/bookingService';
 
 const BookingModal = ({ isOpen, onClose, tutor }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [selectedSubject, setSelectedSubject] = useState(tutor?.subjects?.[0] || '');
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [selectedDuration, setSelectedDuration] = useState('60');
@@ -28,12 +30,24 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
     { value: '120', label: '2 hours' },
   ];
 
-  const handleSubmit = (e) => {
+  const resetForm = () => {
+    setSelectedDate('');
+    setSelectedTime('');
+    setSelectedDuration('60');
+    setNotes('');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast.error('Please login to book a session');
       navigate('/login');
+      return;
+    }
+
+    if (!selectedSubject) {
+      toast.error('Please choose a subject');
       return;
     }
 
@@ -49,17 +63,24 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
 
     setIsSubmitting(true);
 
-    // Simulate booking
-    setTimeout(() => {
-      toast.success(`Booking confirmed with ${tutor.name}!`);
-      setIsSubmitting(false);
+    try {
+      await bookingService.createBooking({
+        tutorId: tutor.userId,
+        subject: selectedSubject,
+        date: selectedDate,
+        time: selectedTime,
+        duration: Number(selectedDuration),
+        notes,
+      });
+
+      toast.success(`Booking request sent to ${tutor.name}!`);
+      resetForm();
       onClose();
-      // Reset form
-      setSelectedDate('');
-      setSelectedTime('');
-      setSelectedDuration('60');
-      setNotes('');
-    }, 1500);
+    } catch (error) {
+      toast.error(error.message || 'Could not send this booking request');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -89,14 +110,33 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
             {/* Tutor Info */}
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center text-primary-600 font-bold">
-                {tutor.avatar}
+                {tutor.avatar || tutor.name?.[0] || 'T'}
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{tutor.name}</p>
-                <p className="text-sm text-gray-500">{tutor.subjects.slice(0, 3).join(', ')}</p>
+                <p className="text-sm text-gray-500">{tutor.subjects?.slice(0, 3).join(', ')}</p>
                 <p className="text-sm font-medium text-gray-900">${tutor.price}/hour</p>
               </div>
             </div>
+
+            {/* Subject Selection */}
+            {tutor.subjects?.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subject
+                </label>
+                <select
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  {tutor.subjects.map((subject) => (
+                    <option key={subject} value={subject}>{subject}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Date Selection */}
             <div>
@@ -204,7 +244,7 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
                 disabled={isSubmitting}
                 className="flex-1 btn-primary py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Booking...' : 'Confirm Booking'}
+                {isSubmitting ? 'Sending...' : 'Confirm Booking'}
               </button>
             </div>
           </form>

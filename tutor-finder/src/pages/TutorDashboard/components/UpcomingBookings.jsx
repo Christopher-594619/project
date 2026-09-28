@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { bookingService } from '../../services/bookingService';
+import { bookingService } from '../../../services/bookingService';
 import { useAuth } from '../../../context/AuthContext';
 import { FaCalendarAlt, FaClock, FaCheck, FaTimes } from 'react-icons/fa';
-import EmptyState from '../common/EmptyState';
-import LoadingSkeleton from '../common/LoadingSkeleton';
+import EmptyState from '../../../components/common/EmptyState';
+import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 const UpcomingBookings = () => {

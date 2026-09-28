@@ -133,7 +133,11 @@ const Navbar = () => {
   };
 
   const dashboardPath =
-    user?.role === 'tutor' ? '/dashboard/tutor' : '/dashboard/student';
+    user?.role === 'admin'
+      ? '/dashboard/admin'
+      : user?.role === 'tutor'
+        ? '/dashboard/tutor'
+        : '/dashboard/student';
 
   const navLinks = [
     { to: '/', label: 'Home' },

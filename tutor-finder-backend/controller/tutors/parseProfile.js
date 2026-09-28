@@ -46,6 +46,7 @@ const parseProfile = (row) => {
         location: row.location || null,
         skills: safeParseJSON(row.skills, []),
         education: safeParseJSON(row.education, []),
+        isActive: row.is_active === undefined ? true : Boolean(row.is_active),
     };
 };
 

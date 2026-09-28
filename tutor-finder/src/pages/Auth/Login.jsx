@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 const Login = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, isLoading: authLoading, isAuthenticated } = useAuth();
+    const { login, isLoading: authLoading, isAuthenticated, user } = useAuth();
     
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
@@ -18,8 +18,16 @@ const Login = () => {
         password: ''
     });
     
-    const from = location.state?.from?.pathname || '/';
+    const redirectFrom = location.state?.from?.pathname;
     const isLoading = isSubmitting || authLoading;
+
+    // Each role has its own dashboard - land there by default. A protected
+    // page the user was actually trying to reach (redirectFrom) still wins.
+    const dashboardForRole = (role) => {
+        if (role === 'admin') return '/dashboard/admin';
+        if (role === 'tutor') return '/dashboard/tutor';
+        return '/dashboard/student';
+    };
 
     const sanitizeEmail = (value) => {
         return value.trim().toLowerCase();
@@ -98,7 +106,7 @@ const Login = () => {
 
             if (result?.success) {
                 toast.success('Welcome back! 🎓');
-                navigate(from, { replace: true });
+                navigate(redirectFrom || dashboardForRole(result.role), { replace: true });
             } else {
                 setErrors({
                     loginError: result?.error || 'Invalid email or password'
@@ -116,10 +124,12 @@ const Login = () => {
     };
 
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate(from, { replace: true });
+        // Someone with an existing session landing on /login - send them
+        // straight back to what they wanted, or their own dashboard.
+        if (isAuthenticated && user) {
+            navigate(redirectFrom || dashboardForRole(user.role), { replace: true });
         }
-    }, [isAuthenticated, navigate, from]);
+    }, [isAuthenticated, user, navigate, redirectFrom]);
 
     return (
         <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary-50 via-white to-secondary-50">

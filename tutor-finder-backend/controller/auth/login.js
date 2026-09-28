@@ -23,7 +23,9 @@ const login = async (req, res) => {
       SELECT
         id,
         password,
-        role
+        role,
+        is_suspended,
+        suspended_reason
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -50,6 +52,15 @@ const login = async (req, res) => {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password"
+      });
+    }
+
+    if (user.is_suspended) {
+      return res.status(403).json({
+        success: false,
+        message: user.suspended_reason
+          ? `Your account has been suspended: ${user.suspended_reason}`
+          : "Your account has been suspended. Contact support for help."
       });
     }
 

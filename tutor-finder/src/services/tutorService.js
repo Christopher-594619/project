@@ -1,24 +1,8 @@
-const API_URL = import.meta.env.VITE_ENDPOINT_URL;
 import { getUserLocation } from "../utils/location";
-
-// Helper to get auth token
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("accessToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
-// Helper for handling fetch responses
-const handleResponse = async (response) => {
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
-  }
-  return data;
-};
+import { authFetch } from "./apiClient";
 
 export const tutorService = {
   // ==================== GET ALL TUTORS ====================
-  // src/services/tutorService.js
   getTutors: async () => {
     try {
       const coords = await getUserLocation();
@@ -28,17 +12,9 @@ export const tutorService = {
         queryParams.append('lng', coords.lng);
       }
 
-      const response = await fetch(
-        `${API_URL}/api/tutors?${queryParams.toString()}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors?${queryParams.toString()}`, {
+        method: 'GET',
+      });
       return data.tutors || [];
     } catch (error) {
       console.error('Error fetching tutors:', error);
@@ -55,18 +31,9 @@ export const tutorService = {
       queryParams.append('lng', coords.lng);
     }
 
-    const response = await fetch(
-      `${API_URL}/api/tutors/${id}?${queryParams.toString()}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      }
-    );
-
-    const data = await handleResponse(response);
+    const data = await authFetch(`/api/tutors/${id}?${queryParams.toString()}`, {
+      method: 'GET',
+    });
     return data.tutor;   // now has .distance
   },
 
@@ -93,18 +60,9 @@ export const tutorService = {
         queryParams.append('lng', coords.lng);
       }
 
-      const response = await fetch(
-        `${API_URL}/api/tutors/search?${queryParams.toString()}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-        }
-      );
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors/search?${queryParams.toString()}`, {
+        method: 'GET',
+      });
       return data.tutors || [];
     } catch (error) {
       console.error('Error searching tutors:', error);
@@ -115,15 +73,7 @@ export const tutorService = {
   // ==================== GET FEATURED TUTORS ====================
   getFeaturedTutors: async () => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/featured`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors/featured`, { method: 'GET' });
       return data.tutors || [];
     } catch (error) {
       console.error('Error fetching featured tutors:', error);
@@ -144,15 +94,7 @@ export const tutorService = {
   // ==================== GET POPULAR SUBJECTS ====================
   getPopularSubjects: async () => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/popular-subjects`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors/popular-subjects`, { method: 'GET' });
       return data.subjects || [];
     } catch (error) {
       console.error('Error fetching popular subjects:', error);
@@ -203,28 +145,13 @@ export const tutorService = {
   // ==================== GET TESTIMONIALS ====================
   getTestimonials: async () => {
     try {
-      const response = await fetch(`${API_URL}/api/reviews/testimonials`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/reviews/testimonials`, { method: 'GET' });
       return data.testimonials || [];
     } catch (error) {
       console.error('Error fetching testimonials:', error);
       // Fallback: get top reviews
       try {
-        const response = await fetch(`${API_URL}/api/reviews/top?limit=3`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-        });
-        const data = await handleResponse(response);
+        const data = await authFetch(`/api/reviews/top?limit=3`, { method: 'GET' });
         return data.reviews || [];
       } catch (fallbackError) {
         console.error('Fallback failed:', fallbackError);
@@ -236,15 +163,7 @@ export const tutorService = {
   // ==================== GET TUTOR REVIEWS ====================
   getTutorReviews: async (tutorId) => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/${tutorId}/reviews`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors/${tutorId}/reviews`, { method: 'GET' });
       return data.reviews || [];
     } catch (error) {
       console.error('Error fetching tutor reviews:', error);
@@ -255,15 +174,7 @@ export const tutorService = {
   // ==================== GET TUTOR BY USER ID ====================
   getTutorByUserId: async (userId) => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/user/${userId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...getAuthHeaders(),
-        },
-      });
-
-      const data = await handleResponse(response);
+      const data = await authFetch(`/api/tutors/user/${userId}`, { method: 'GET' });
       return data.tutor;
     } catch (error) {
       console.error('Error fetching tutor by user ID:', error);
@@ -274,16 +185,11 @@ export const tutorService = {
   // ==================== CREATE TUTOR PROFILE ====================
   createTutorProfile: async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/profile`, {
+      // DO NOT set Content-Type - browser sets it with boundary for FormData
+      const data = await authFetch(`/api/tutors/profile`, {
         method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          // DO NOT set Content-Type - browser sets it with boundary for FormData
-        },
         body: formData,
       });
-
-      const data = await handleResponse(response);
       return data.tutor;
     } catch (error) {
       console.error('Error creating tutor profile:', error);
@@ -294,15 +200,10 @@ export const tutorService = {
   // ==================== UPDATE TUTOR PROFILE ====================
   updateTutorProfile: async (formData) => {
     try {
-      const response = await fetch(`${API_URL}/api/tutors/profile`, {
+      const data = await authFetch(`/api/tutors/profile`, {
         method: 'PUT',
-        headers: {
-          ...getAuthHeaders(),
-        },
         body: formData,
       });
-
-      const data = await handleResponse(response);
       return data.tutor;
     } catch (error) {
       console.error('Error updating tutor profile:', error);

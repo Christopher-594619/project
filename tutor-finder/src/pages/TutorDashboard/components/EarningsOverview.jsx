@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { bookingService } from '../../services/bookingService';
+import { bookingService } from '../../../services/bookingService';
 import { useAuth } from '../../../context/AuthContext';
 import { FaMoneyBillWave, FaCalendarAlt, FaChartLine, FaStar } from 'react-icons/fa';
-import LoadingSkeleton from '../common/LoadingSkeleton';
+import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 
 const EarningsOverview = () => {
   const { user } = useAuth();

@@ -165,9 +165,9 @@ export const AuthProvider = ({ children }) => {
             const decoded = decodeAccessToken(data.accessToken);
             setIsLoggedIn(true);
 
-            await fetchUser(data.accessToken);
+            const loggedInUser = await fetchUser(data.accessToken);
 
-            return { success: true };
+            return { success: true, role: loggedInUser?.role || data.user?.role };
 
         } catch (error) {
             setAuthError(error.message);
@@ -234,6 +234,13 @@ export const AuthProvider = ({ children }) => {
         checkAuth();
     }, []);
 
+    // re-fetch the signed-in user (and tutor profile) after a profile update
+    const refreshUser = async () => {
+        const token = await getValidAccessToken();
+        if (!token) return null;
+        return await fetchUser(token);
+    };
+
     // context values
     const value = {
         user,
@@ -246,6 +253,7 @@ export const AuthProvider = ({ children }) => {
 
         login: loginUser,
         logout,
+        refreshUser,
 
         getValidAccessToken,
         decodeAccessToken,

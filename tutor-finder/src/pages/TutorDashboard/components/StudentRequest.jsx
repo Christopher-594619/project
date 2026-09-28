@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaUser, FaCalendarAlt, FaClock, FaCheck, FaTimes, FaComment } from 'react-icons/fa';
-import EmptyState from '../common/EmptyState';
+import EmptyState from '../../../components/common/EmptyState';
 import toast from 'react-hot-toast';
 
 const StudentRequests = () => {

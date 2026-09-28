@@ -1,10 +1,11 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 
 const DashboardLayout = ({ children }) => {
   const { user, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -15,12 +16,21 @@ const DashboardLayout = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  // Tutors and admins have their own dashboards.
+  if (user.role === 'tutor') {
+    return <Navigate to="/dashboard/tutor" replace />;
+  }
+
+  if (user.role === 'admin') {
+    return <Navigate to="/dashboard/admin" replace />;
   }
 
   return (
     <div className="flex h-screen w-full min-w-0 overflow-hidden bg-gray-50">
-      <DashboardSidebar userType={user.role} />
+      <DashboardSidebar />
 
       <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
         <div className="w-full max-w-7xl mx-auto p-6 md:p-8">
