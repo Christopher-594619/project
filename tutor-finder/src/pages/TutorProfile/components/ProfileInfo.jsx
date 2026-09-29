@@ -1,8 +1,9 @@
 import React from 'react';
-import { FaUserGraduate, FaLanguage, FaBriefcase, FaGraduationCap, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUserGraduate, FaLanguage, FaBriefcase, FaGraduationCap } from 'react-icons/fa';
 import SubjectTags from '../../../components/common/SubjectTags';
+import TutorLocationMap from '../../../components/common/TutorLocationMap';
 
-const ProfileInfo = ({ tutor }) => {
+const ProfileInfo = ({ tutor, studentLocation }) => {
   return (
     <div className="grid lg:grid-cols-3 gap-6">
       {/* Main Info */}
@@ -105,16 +106,10 @@ const ProfileInfo = ({ tutor }) => {
           </div>
         </div>
 
-        {/* Location Map Placeholder */}
+        {/* Live location map */}
         <div className="bg-white rounded-2xl shadow-soft border border-gray-100 p-6">
           <h3 className="font-semibold text-gray-900 mb-3">Location</h3>
-          <div className="aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <FaMapMarkerAlt className="text-primary-500 w-8 h-8 mx-auto mb-2" />
-              <p className="text-sm text-gray-600">{tutor.location}</p>
-              <p className="text-xs text-gray-500 mt-1">Interactive map coming soon</p>
-            </div>
-          </div>
+          <TutorLocationMap tutor={tutor} studentLocation={studentLocation} />
         </div>
       </div>
     </div>

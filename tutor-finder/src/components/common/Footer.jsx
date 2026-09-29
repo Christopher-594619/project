@@ -39,7 +39,6 @@ const Footer = () => {
 
   return (
     <>
-    <p>fuck</p>
     </>
   );
 };

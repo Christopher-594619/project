@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../hooks/useNotification';
-import { FaCalendarAlt, FaHeart, FaSearch, FaBell, FaBookOpen } from 'react-icons/fa';
+import { FaCalendarAlt, FaHeart, FaSearch, FaBell, FaBookOpen, FaChalkboardTeacher } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { mockStudentData } from '../../data/students';
 import EmptyState from '../../components/common/EmptyState';
@@ -55,6 +55,27 @@ const StudentDashboard = () => {
         {stats.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
+      </div>
+
+      {/* Become a Tutor */}
+      <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl shadow-soft p-6 text-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <FaChalkboardTeacher className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold">Become a Tutor</h2>
+            <p className="text-sm text-white/85 mt-1">
+              Share your knowledge and earn by helping students learn.
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/dashboard/student/become-tutor"
+          className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-white text-primary-700 font-semibold text-sm hover:bg-gray-100 transition-colors whitespace-nowrap"
+        >
+          Get started
+        </Link>
       </div>
 
       {/* Upcoming Lessons */}

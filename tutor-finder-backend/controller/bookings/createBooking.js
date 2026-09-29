@@ -78,6 +78,23 @@ const createBooking = async (req, res) => {
             [id, studentId, tutorId, subject, date, time, sessionDuration, price, totalAmount, notes || null]
         );
 
+        // Let the tutor know - a failed notification shouldn't fail the booking.
+        try {
+            const [studentRows] = await db.promise().query(
+                "SELECT name, email FROM users WHERE id = ? LIMIT 1",
+                [studentId]
+            );
+            const studentName = studentRows[0]?.name || studentRows[0]?.email || "A student";
+            const message = `${studentName} requested a ${sessionDuration}-minute ${subject} session with you on ${date} at ${time}.${notes ? ` Note: ${notes}` : ""}`;
+
+            await db.promise().query(
+                "INSERT INTO notifications (id, user_id, type, message) VALUES (?, ?, 'booking', ?)",
+                [uuidv4(), tutorId, message.slice(0, 500)]
+            );
+        } catch (notifyError) {
+            console.error("Error creating booking notification:", notifyError);
+        }
+
         return res.status(201).json({
             success: true,
             message: "Booking request sent",

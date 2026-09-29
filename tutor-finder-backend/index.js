@@ -14,6 +14,7 @@ const {auth} = require("./routes/signup")
 const {tutors}= require("./routes/tutors");
 const {admin} = require("./routes/admin");
 const {bookings} = require("./routes/bookings");
+const {notifications} = require("./routes/notifications");
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.use("/api/users", users)
 app.use("/api/tutors", tutors)
 app.use("/api/admin", admin)
 app.use("/api/bookings", bookings)
+app.use("/api/notifications", notifications)
 
 app.get(/.*/, (req, res) => {
   // Skip API routes (should already be handled above)
