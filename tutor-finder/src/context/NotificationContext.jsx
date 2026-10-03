@@ -1,11 +1,8 @@
-import React, { createContext, useEffect, useState } from 'react';
-import { useAuth } from './AuthContext';
-import { notificationService } from '../services/notificationService';
+import React, { createContext, useState } from 'react';
 
 export const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
-  const { user, accessToken } = useAuth();
   const [notifications, setNotifications] = useState([
     {
       id: 1,
@@ -33,50 +30,18 @@ export const NotificationProvider = ({ children }) => {
     },
   ]);
 
-  useEffect(() => {
-    if (!user || !accessToken) return undefined;
-
-    let isMounted = true;
-
-    const loadNotifications = async () => {
-      try {
-        const loadedNotifications = await notificationService.getNotifications();
-        if (isMounted) setNotifications(loadedNotifications);
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-      }
-    };
-
-    loadNotifications();
-    const refreshTimer = window.setInterval(loadNotifications, 10000);
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(refreshTimer);
-    };
-  }, [user, accessToken]);
-
   const addNotification = (notification) => {
-    setNotifications((current) => [
-      { ...notification, id: Date.now(), read: false },
-      ...current,
-    ]);
+    setNotifications([{ ...notification, id: Date.now(), read: false }, ...notifications]);
   };
 
   const markAsRead = (id) => {
-    setNotifications((current) => current.map(notif =>
+    setNotifications(notifications.map(notif =>
       notif.id === id ? { ...notif, read: true } : notif
     ));
-
-    if (user && accessToken) {
-      notificationService.markAsRead(id).catch((error) => {
-        console.error('Error marking notification as read:', error);
-      });
-    }
   };
 
   const markAllAsRead = () => {
-    setNotifications((current) => current.map(notif => ({ ...notif, read: true })));
+    setNotifications(notifications.map(notif => ({ ...notif, read: true })));
   };
 
   const getUnreadCount = () => {

@@ -272,13 +272,9 @@ const sendEmail = async (req, res) => {
       `,
     };
 
-    // ---- LOCAL DEV MODE ----
-    // Real email sending is not configured for local development, so we just
-    // log the code to this terminal instead of actually sending it. Look
-    // here for the code when signing up locally.
-    console.log(`\n==============================`);
-    console.log(`VERIFICATION CODE for ${email}: ${code}`);
-    console.log(`==============================\n`);
+    await transporter.sendMail(mailOptions);
+    
+    console.log(`Verification code ${code} sent to ${email}`);
 
     return res.status(200).json({
       success: true,
@@ -302,6 +298,7 @@ const verifyCode = async (req, res) => {
     const { email, code } = req.body;
 
     if (!email || !code) {
+      console.log("emial and code required")
       return res.status(400).json({
         success: false,
         message: "Email and code are required",
@@ -311,6 +308,7 @@ const verifyCode = async (req, res) => {
     const storedData = verificationCodes.get(email);
 
     if (!storedData) {
+      console.log("no stored data")
       return res.status(400).json({
         success: false,
         message: "No verification code found. Please request a new one.",

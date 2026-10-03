@@ -12,7 +12,7 @@ const authenticate = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, ACCESS_SECRET);
-
+    
     req.user = decoded;
 
     next();

@@ -1,7 +1,7 @@
 const { db } = require("../../modal/db");
 const { parseProfile } = require("./parseProfile");
 
-// ==================== OTHER CONTROLLERS ====================
+// ==================== GET TUTOR PROFILE ====================
 const getTutorProfile = async (req, res) => {
     try {
         const { id } = req.params;
@@ -16,7 +16,7 @@ const getTutorProfile = async (req, res) => {
             !isNaN(userLat) &&
             !isNaN(userLng);
 
-        // Haversine distance in miles. NULL when user has no location.
+        // Haversine distance in km. NULL when user has no location.
         const distanceSelect = hasUserLocation
             ? `
                 (
@@ -33,7 +33,6 @@ const getTutorProfile = async (req, res) => {
             `
             : `NULL AS distance`;
 
-        // 3 coord params first (used in SELECT), then the two ids
         const params = hasUserLocation
             ? [userLat, userLng, userLat, id, id]
             : [id, id];
@@ -47,11 +46,12 @@ const getTutorProfile = async (req, res) => {
                 tp.longitude,
 
                 u.id AS user_id,
-                u.name AS tutor_name,
                 u.email AS tutor_email,
                 u.phone AS tutor_phone,
-                tp.bio AS tutor_bio,
-                tp.photo AS tutor_profile_pic,
+                u.firstName AS tutor_first_name,
+                u.lastName AS tutor_last_name,
+                u.bio AS tutor_bio,
+                u.profile_pic AS tutor_profile_pic,
 
                 ${distanceSelect}
 
@@ -95,7 +95,6 @@ const getTutorProfile = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching tutor profile:", error);
-
         return res.status(500).json({
             success: false,
             message: "Internal server error"

@@ -1,17 +1,15 @@
 const express = require("express");
-const { authenticate } = require("../controller/auth/authenticate");
-const { createBooking } = require("../controller/bookings/createBooking");
-const { getMyBookings } = require("../controller/bookings/getMyBookings");
-const { updateBookingStatus } = require("../controller/bookings/updateBookingStatus");
-const { getEarnings } = require("../controller/bookings/getEarnings");
+const {upload} = require("../controller/common/upload");
+const {authenticate} = require("../controller/auth/authenticate");
+const {createBooking} = require("../controller/bookings/createBooking")
+const {getBookings} = require("../controller/bookings/getBookings");
+const {updateBookingStatus} = require("../controller/bookings/updateBooking");
 
 const bookings = express.Router();
 
-bookings.use(authenticate);
 
-bookings.post("/", createBooking);
-bookings.get("/", getMyBookings);
-bookings.get("/earnings", getEarnings);
-bookings.patch("/:id/status", updateBookingStatus);
+bookings.post("/", authenticate, createBooking)
+bookings.get("/", authenticate, getBookings)
+bookings.patch("/:id", authenticate, updateBookingStatus)
 
-module.exports = { bookings };
+module.exports = {bookings}

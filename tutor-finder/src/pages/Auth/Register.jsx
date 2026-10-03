@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
-import { FaEnvelope, FaLock, FaPhone, FaUserPlus, FaCheck, FaTimes, FaGraduationCap } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPhone, FaUser, FaUserPlus, FaCheck, FaTimes, FaGraduationCap } from 'react-icons/fa';
 import EmailVerification from './VerifyEmail';
 
 const Register = () => {
@@ -39,6 +39,8 @@ const Register = () => {
 
             // Store user data temporarily
             setPendingUserData({
+                firstName: data.firstName,
+                lastName: data.lastName,
                 email: data.email,
                 phone: data.phone,
                 password: data.password,
@@ -55,6 +57,7 @@ const Register = () => {
     };
 
     const handleVerificationSuccess = async () => {
+        console.log(pendingUserData)
         try {
             const response = await fetch(`${import.meta.env.VITE_ENDPOINT_URL}/api/auth/signup`, {
                 method: 'POST',
@@ -73,6 +76,7 @@ const Register = () => {
             }, 2000);
 
         } catch (err) {
+            console.log(err)
             setError('Failed to create account: ' + err.message);
         }
     };
@@ -112,6 +116,64 @@ const Register = () => {
 
                         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
                             <div className="space-y-4">
+                                <div>
+                                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                                        First Name
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <FaUser className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            id="firstName"
+                                            type="text"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white ${
+                                                errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="John"
+                                            {...register('firstName', {
+                                                required: 'First name is required',
+                                                minLength: {
+                                                    value: 2,
+                                                    message: 'First name must be at least 2 characters'
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    {errors.firstName && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">
+                                        Last Name
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <FaUser className="text-gray-400" />
+                                        </div>
+                                        <input
+                                            id="lastName"
+                                            type="text"
+                                            className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all bg-white ${
+                                                errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                            }`}
+                                            placeholder="Banda"
+                                            {...register('lastName', {
+                                                required: 'Last name is required',
+                                                minLength: {
+                                                    value: 2,
+                                                    message: 'Last name must be at least 2 characters'
+                                                }
+                                            })}
+                                        />
+                                    </div>
+                                    {errors.lastName && (
+                                        <p className="text-red-500 text-xs mt-1">{errors.lastName.message}</p>
+                                    )}
+                                </div>
+
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                                         Email Address
@@ -288,6 +350,8 @@ const Register = () => {
                         email={pendingUserData?.email || ''}
                         onVerificationSuccess={handleVerificationSuccess}
                         onBack={() => setShowVerification(false)}
+                        error={error}
+                        setError={setError}
                     />
                 )}
             </motion.div>

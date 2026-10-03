@@ -38,7 +38,7 @@ const TutorCard = ({ tutor }) => {
   const [isFav, setIsFav] = useState(false);
 
   const imageUrl = getImageUrl(tutor.photo);
-  const initials = getInitials(tutor.name);
+  const initials = getInitials(tutor.firname);
   const subjects = tutor.subjects || [];
 
   const availableToday = tutor.availability?.includes(
@@ -52,7 +52,7 @@ const TutorCard = ({ tutor }) => {
         {imageUrl && (
           <img
             src={imageUrl}
-            alt={tutor.name || 'Tutor'}
+            alt={`${tutor.firstName} ${tutor.lastName} || 'Tutor'`}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
@@ -111,7 +111,7 @@ const TutorCard = ({ tutor }) => {
           <div className="min-w-0 flex-1">
             <Link to={`/tutor/${tutor.id}`} className="block">
               <h3 className="text-lg font-semibold text-gray-900 hover:text-primary-600 transition-colors truncate">
-                {tutor.name}
+                {tutor.firstName} {tutor.lastName}
               </h3>
             </Link>
             <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">

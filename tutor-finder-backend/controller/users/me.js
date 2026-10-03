@@ -19,7 +19,12 @@ const getCurrentUser = async (req, res) => {
         id,
         email,
         role,
-        created_at
+        firstName, 
+        lastName,
+        phone,
+        created_at,
+        bio,
+        profile_pic
       FROM users
       WHERE id = ?
       LIMIT 1
@@ -106,7 +111,10 @@ const getCurrentUser = async (req, res) => {
       id: user.id,
       email: user.email,
       role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
       createdAt: user.created_at,
+      phone: user.phone,
 
       // Tutor biography and photo belong to the tutor profile.
       bio: profileData?.bio || null,

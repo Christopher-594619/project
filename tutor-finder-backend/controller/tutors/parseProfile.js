@@ -20,6 +20,8 @@ const parseProfile = (row) => {
         name: row.tutor_name || row.name || null,
         email: row.tutor_email || null,
         phone: row.tutor_phone || null,
+        firstName: row.tutor_first_name || null,
+        lastName: row.tutor_last_name || null,
 
         // Use user's profile_pic as fallback for photo
         photo: row.photo || row.tutor_profile_pic || null,
@@ -46,7 +48,6 @@ const parseProfile = (row) => {
         location: row.location || null,
         skills: safeParseJSON(row.skills, []),
         education: safeParseJSON(row.education, []),
-        isActive: row.is_active === undefined ? true : Boolean(row.is_active),
     };
 };
 

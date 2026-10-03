@@ -8,9 +8,9 @@ const signup = async (req, res) => {
     const id = uuidv4();
     
     try {
-        const {email, phone, password } = req.body;
+        const { firstName, lastName, email, phone, password } = req.body;
 
-        if (!email || !phone || !password) {
+        if (!email || !phone || !password || !firstName || !lastName) {
             return res.status(400).json({
                 success: false,
                 message: "All required fields must be provided"
@@ -49,21 +49,23 @@ const signup = async (req, res) => {
         const [result] = await db.promise().query(
             `
             INSERT INTO users
-            (id, email, phone, password, role)
-            VALUES (?, ?, ?, ?, ?)
+            (id, email, phone, password, firstName, lastName, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             `,
             [
                 id,
                 email.toLowerCase(),
                 phone,
                 hashedPassword,
+                firstName,
+                lastName,
                 "student"
             ]
         );
 
         // Get inserted user
         const [insertedUser] = await db.promise().query(
-            "SELECT id, email, phone, role FROM users WHERE id = ?",
+            "SELECT id, email, phone, firstName, lastName, role FROM users WHERE id = ?",
             [id]
         );
 

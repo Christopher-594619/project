@@ -1,9 +1,9 @@
-const { db } = require("../modal/db");
-
 const isAdmin = async (req, res, next) => {
   try {
-    const userId = req.user?.userId || req.user?.id;
+    const userId = req.user?.userId;
 
+    console.log(userId);
+    
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -11,6 +11,7 @@ const isAdmin = async (req, res, next) => {
       });
     }
 
+    const { db } = require("../modal/db");
     const [rows] = await db.promise().query(
       `SELECT role FROM users WHERE id = ? LIMIT 1`,
       [userId]
@@ -18,7 +19,7 @@ const isAdmin = async (req, res, next) => {
 
     const user = rows[0];
 
-    if (!user || user.role !== "admin") {
+    if (!user || user.role === 'member') {
       return res.status(403).json({
         success: false,
         message: "Forbidden: Admin access required"

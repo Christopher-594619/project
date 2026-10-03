@@ -1,27 +1,20 @@
 import React from 'react';
 import MainLayout from '../layouts/MainLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
-import TutorDashboardLayout from '../layouts/TutorDashboardLayout';
-import AdminDashboardLayout from '../layouts/AdminDashboardLayout';
 import Landing from '../pages/Landing/Landing';
 import Search from '../pages/Search/Search';
 import TutorProfile from '../pages/TutorProfile/TutorProfile';
 import StudentDashboard from '../pages/StudentDashboard/StudentDashboard';
 import TutorDashboard from '../pages/TutorDashboard/TutorDashboard';
-import TutorBookings from '../pages/TutorDashboard/Bookings';
-import TutorEarnings from '../pages/TutorDashboard/Earnings';
-import TutorStudents from '../pages/TutorDashboard/Students';
-import TutorProfileSettings from '../pages/TutorDashboard/Profile';
-import TutorSettings from '../pages/TutorDashboard/Settings';
-import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
-import AdminStudents from '../pages/AdminDashboard/Students';
-import AdminTutors from '../pages/AdminDashboard/Tutors';
-import AdminBookings from '../pages/AdminDashboard/Bookings';
 import Login from '../pages/Auth/Login';
 import Register from '../pages/Auth/Register';
 import ForgotPassword from '../pages/Auth/ForgotPassword';
-import Messages from '../pages/Messages/Messages';
 import BecomeTutor from '../pages/StudentDashboard/components/BecomeTutor';
+import TutorBookings from '../pages/TutorDashboard/components/bookings';
+import StudentProfileEdit from '../pages/StudentDashboard/components/updateProfile';
+import TutorProfileEdit from '../pages/TutorDashboard/components/tutorProfileUpdate';
+import Messages from '../pages/TutorDashboard/components/messages';
+import ChatList from '../pages/TutorDashboard/components/ChatList';
 
 export const routes = [
   {
@@ -85,88 +78,48 @@ export const routes = [
   {
     path: '/dashboard/tutor',
     element: (
-      <TutorDashboardLayout>
+      <DashboardLayout>
         <TutorDashboard />
-      </TutorDashboardLayout>
+      </DashboardLayout>
     ),
   },
   {
     path: '/dashboard/tutor/bookings',
     element: (
-      <TutorDashboardLayout>
+      <MainLayout>
         <TutorBookings />
-      </TutorDashboardLayout>
+      </MainLayout>
     ),
   },
   {
-    path: '/dashboard/tutor/earnings',
+    path: '/dashboard/student/settings',
     element: (
-      <TutorDashboardLayout>
-        <TutorEarnings />
-      </TutorDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/tutor/students',
-    element: (
-      <TutorDashboardLayout>
-        <TutorStudents />
-      </TutorDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/tutor/profile',
-    element: (
-      <TutorDashboardLayout>
-        <TutorProfileSettings />
-      </TutorDashboardLayout>
+      <MainLayout>
+        <StudentProfileEdit />
+      </MainLayout>
     ),
   },
   {
     path: '/dashboard/tutor/settings',
     element: (
-      <TutorDashboardLayout>
-        <TutorSettings />
-      </TutorDashboardLayout>
+      <MainLayout>
+        <TutorProfileEdit />
+      </MainLayout>
     ),
   },
   {
-    path: '/dashboard/admin',
+    path: '/chat/:chatId',
     element: (
-      <AdminDashboardLayout>
-        <AdminDashboard />
-      </AdminDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/admin/students',
-    element: (
-      <AdminDashboardLayout>
-        <AdminStudents />
-      </AdminDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/admin/tutors',
-    element: (
-      <AdminDashboardLayout>
-        <AdminTutors />
-      </AdminDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/admin/bookings',
-    element: (
-      <AdminDashboardLayout>
-        <AdminBookings />
-      </AdminDashboardLayout>
+      <MainLayout>
+        <Messages />
+      </MainLayout>
     ),
   },
   {
     path: '/messages',
     element: (
       <MainLayout>
-        <Messages />
+        <ChatList />
       </MainLayout>
     ),
   },

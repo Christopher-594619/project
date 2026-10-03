@@ -5,17 +5,6 @@ import { formatDistanceToNow } from 'date-fns';
 const NotificationDropdown = ({ onClose }) => {
   const { notifications, markAsRead, markAllAsRead } = useNotification();
 
-  const formatNotificationTime = (time) => {
-    if (!time) return 'Recently';
-
-    const parsedTime = new Date(time);
-    if (Number.isNaN(parsedTime.getTime())) {
-      return String(time);
-    }
-
-    return formatDistanceToNow(parsedTime, { addSuffix: true });
-  };
-
   const getIcon = (type) => {
     switch (type) {
       case 'booking':
@@ -77,7 +66,7 @@ const NotificationDropdown = ({ onClose }) => {
                   {notification.message}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {formatNotificationTime(notification.time)}
+                  {formatDistanceToNow(new Date(notification.time), { addSuffix: true })}
                 </p>
               </div>
               {!notification.read && (

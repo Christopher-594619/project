@@ -1,6 +1,6 @@
-// controllers/tutor/tutorController.js
+// controllers/tutor/getAllTutors.js
 const { db } = require("../../modal/db");
-const { parseProfile } = require("../tutors/parseProfile");
+const { parseProfile } = require("./parseProfile");
 
 const getAllTutors = async (req, res) => {
     try {
@@ -39,15 +39,16 @@ const getAllTutors = async (req, res) => {
             SELECT
                 tp.*,
 
-                u.id AS user_id,
-                u.name AS tutor_name,
-                u.email AS tutor_email,
-                u.phone AS tutor_phone,
-                tp.bio AS tutor_bio,
-                tp.photo AS tutor_profile_pic,
-
                 tp.latitude,
                 tp.longitude,
+
+                u.id AS user_id,
+                u.email AS tutor_email,
+                u.phone AS tutor_phone,
+                u.firstName AS tutor_first_name,
+                u.lastName AS tutor_last_name,
+                u.bio AS tutor_bio,
+                u.profile_pic AS tutor_profile_pic,
 
                 ${distanceSelect}
 
