@@ -8,6 +8,16 @@ export const adminService = {
   getStudents: async (params = {}) =>
     authFetch(`/api/admin/users${buildQuery(params)}`, { method: 'GET' }),
 
+  // ==================== ADMINS ====================
+  getAdmins: async () => authFetch(`/api/admin/admins`, { method: 'GET' }),
+
+  createAdmin: async (payload) =>
+    authFetch(`/api/admin/admins`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+
   // ==================== TUTORS ====================
   getTutors: async (params = {}) =>
     authFetch(`/api/admin/tutors${buildQuery(params)}`, { method: 'GET' }),

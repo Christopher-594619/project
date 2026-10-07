@@ -17,6 +17,7 @@ import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
 import AdminStudents from '../pages/AdminDashboard/Students';
 import AdminTutors from '../pages/AdminDashboard/Tutors';
 import AdminBookings from '../pages/AdminDashboard/Bookings';
+import AdminAdmins from '../pages/AdminDashboard/Admins';
 import Login from '../pages/Auth/Login';
 import Register from '../pages/Auth/Register';
 import ForgotPassword from '../pages/Auth/ForgotPassword';
@@ -159,6 +160,14 @@ export const routes = [
     element: (
       <AdminDashboardLayout>
         <AdminBookings />
+      </AdminDashboardLayout>
+    ),
+  },
+  {
+    path: '/dashboard/admin/admins',
+    element: (
+      <AdminDashboardLayout>
+        <AdminAdmins />
       </AdminDashboardLayout>
     ),
   },

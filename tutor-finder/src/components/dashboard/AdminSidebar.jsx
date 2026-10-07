@@ -9,6 +9,7 @@ import {
   FaSignOutAlt,
   FaTimes,
   FaShieldAlt,
+  FaUserShield,
 } from 'react-icons/fa';
 
 const adminLinks = [
@@ -16,6 +17,7 @@ const adminLinks = [
   { to: '/dashboard/admin/students', icon: FaUserGraduate, label: 'Students' },
   { to: '/dashboard/admin/tutors', icon: FaChalkboardTeacher, label: 'Tutors' },
   { to: '/dashboard/admin/bookings', icon: FaCalendarAlt, label: 'Bookings' },
+  { to: '/dashboard/admin/admins', icon: FaUserShield, label: 'Admins' },
 ];
 
 const AdminSidebar = ({ onNavigate = null, showClose = false }) => {

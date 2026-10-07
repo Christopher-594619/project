@@ -10,6 +10,7 @@ const { updateTutorVerification } = require("../controller/admin/updateTutorVeri
 const { updateTutorListing } = require("../controller/admin/updateTutorListing");
 const { deleteUser } = require("../controller/admin/deleteUser");
 const { getBookings } = require("../controller/admin/getBookings");
+const { getAdmins, createAdmin } = require("../controller/admin/admins");
 const { updateBookingStatus } = require("../controller/bookings/updateBookingStatus");
 
 const admin = express.Router();
@@ -22,6 +23,9 @@ admin.get("/stats", getStats);
 admin.get("/users", getUsers);
 admin.patch("/users/:id/status", updateUserStatus);
 admin.delete("/users/:id", deleteUser);
+
+admin.get("/admins", getAdmins);
+admin.post("/admins", createAdmin);
 
 admin.get("/tutors", getTutors);
 admin.patch("/tutors/:id/verify", updateTutorVerification);
