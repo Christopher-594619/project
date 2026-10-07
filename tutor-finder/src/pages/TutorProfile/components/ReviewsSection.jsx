@@ -1,63 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import ReviewCard from '../../../components/common/ReviewCard';
 import RatingStars from '../../../components/common/RatingStars';
 import EmptyState from '../../../components/common/EmptyState';
 import { FaStar, FaRegStar } from 'react-icons/fa';
-import { reviewService } from '../../../services/reviewService';
 import toast from 'react-hot-toast';
 
-const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
-  const { user } = useAuth();
+const API_URL = import.meta.env.VITE_ENDPOINT_URL;
+
+const ReviewsSection = ({ tutorId }) => {
+  const { user, isLoggedIn, accessToken} = useAuth();
+
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const averageRating = reviews.length > 0 
-    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
+  // ============ LOAD REVIEWS ============
+  const loadReviews = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/tutors/reviews/${tutorId}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to load reviews');
+
+      setReviews(data.reviews || []);
+    } catch (err) {
+      console.error('Error loading reviews:', err);
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tutorId) loadReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorId]);
+
+  // ============ DERIVED ============
+  const averageRating = reviews.length
+    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
     : 0;
 
-  const ratingDistribution = [5, 4, 3, 2, 1].map(star => {
-    const count = reviews.filter(r => Math.floor(r.rating) === star).length;
-    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+  const ratingDistribution = [5, 4, 3, 2, 1].map((star) => {
+    const count = reviews.filter((r) => Math.floor(r.rating) === star).length;
+    const percentage = reviews.length ? (count / reviews.length) * 100 : 0;
     return { star, count, percentage };
   });
 
+  const alreadyReviewed = user && reviews.some((r) => r.studentId === user.id);
+
+  // ============ SUBMIT REVIEW ============
   const handleSubmitReview = async () => {
-    if (!user) {
+    if (!isLoggedIn) {
       toast.error('Please login to leave a review');
       return;
     }
-
     if (rating === 0) {
       toast.error('Please select a rating');
       return;
     }
-
     if (!comment.trim()) {
       toast.error('Please write a review comment');
       return;
     }
 
     setSubmitting(true);
+
     try {
-      await reviewService.addReview({
-        tutorId,
-        studentId: user.id,
-        studentName: user.name,
-        rating,
-        comment,
-        date: new Date().toISOString(),
+
+      const res = await fetch(`${API_URL}/api/tutors/reviews/add`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          tutorId,
+          rating,
+          comment: comment.trim(),
+        }),
       });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to submit review');
+
       toast.success('Review submitted successfully!');
       setRating(0);
       setComment('');
       setShowReviewForm(false);
-      onReviewAdded();
-    } catch (error) {
-      toast.error('Failed to submit review');
+      await loadReviews();
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit review');
     } finally {
       setSubmitting(false);
     }
@@ -69,9 +112,9 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
         <h2 className="text-lg font-semibold text-gray-900">
           Reviews ({reviews.length})
         </h2>
-        {user && !reviews.some(r => r.studentId === user.id) && (
+        {isLoggedIn && !alreadyReviewed && (
           <button
-            onClick={() => setShowReviewForm(!showReviewForm)}
+            onClick={() => setShowReviewForm((v) => !v)}
             className="text-primary-600 hover:text-primary-700 font-medium text-sm transition-colors"
           >
             {showReviewForm ? 'Cancel' : 'Write a Review'}
@@ -83,9 +126,17 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
       {reviews.length > 0 && (
         <div className="flex flex-col md:flex-row gap-8 mb-8 p-4 bg-gray-50 rounded-xl">
           <div className="text-center md:text-left">
-            <div className="text-4xl font-bold text-gray-900">{averageRating.toFixed(1)}</div>
-            <RatingStars rating={averageRating} size="lg" className="justify-center md:justify-start my-2" />
-            <div className="text-sm text-gray-500">{reviews.length} reviews</div>
+            <div className="text-4xl font-bold text-gray-900">
+              {averageRating.toFixed(1)}
+            </div>
+            <RatingStars
+              rating={averageRating}
+              size="lg"
+              className="justify-center md:justify-start my-2"
+            />
+            <div className="text-sm text-gray-500">
+              {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+            </div>
           </div>
           <div className="flex-1 space-y-1.5">
             {ratingDistribution.map(({ star, count, percentage }) => (
@@ -93,10 +144,10 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
                 <span className="text-sm text-gray-600 w-8">{star}</span>
                 <FaStar className="text-yellow-400 w-3 h-3" />
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-yellow-400 rounded-full transition-all duration-500"
                     style={{ width: `${percentage}%` }}
-                  ></div>
+                  />
                 </div>
                 <span className="text-sm text-gray-500 w-12">{count}</span>
               </div>
@@ -110,15 +161,15 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
         <div className="mb-8 p-4 border border-gray-200 rounded-xl bg-gray-50">
           <h3 className="font-medium text-gray-900 mb-3">Write a Review</h3>
           <div className="space-y-4">
-            <fieldset>
-              <legend className="block text-sm font-medium text-gray-700 mb-1">Rating</legend>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Rating
+              </label>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
                     key={star}
                     type="button"
-                    aria-label={`Rate ${star} out of 5 stars`}
-                    aria-pressed={rating === star}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     onClick={() => setRating(star)}
@@ -132,15 +183,18 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
                   </button>
                 ))}
                 <span className="ml-2 text-sm text-gray-500">
-                  {rating > 0 ? `${rating} stars` : 'Select rating'}
+                  {rating > 0
+                    ? `${rating} star${rating > 1 ? 's' : ''}`
+                    : 'Select rating'}
                 </span>
               </div>
-            </fieldset>
+            </div>
+
             <div>
-              <label htmlFor="review-comment" className="block text-sm font-medium text-gray-700 mb-1">Comment</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Comment
+              </label>
               <textarea
-                id="review-comment"
-                name="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows="3"
@@ -148,8 +202,10 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
                 placeholder="Share your experience with this tutor..."
               />
             </div>
+
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={handleSubmitReview}
                 disabled={submitting}
                 className="btn-primary px-6 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
@@ -157,6 +213,7 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
                 {submitting ? 'Submitting...' : 'Submit Review'}
               </button>
               <button
+                type="button"
                 onClick={() => setShowReviewForm(false)}
                 className="btn-secondary px-6 py-2 text-sm"
               >
@@ -168,7 +225,13 @@ const ReviewsSection = ({ reviews, tutorId, onReviewAdded }) => {
       )}
 
       {/* Reviews List */}
-      {reviews.length > 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : reviews.length > 0 ? (
         <div className="space-y-4">
           {reviews.map((review) => (
             <ReviewCard key={review.id} review={review} />

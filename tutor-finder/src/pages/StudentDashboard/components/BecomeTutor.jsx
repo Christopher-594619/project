@@ -55,7 +55,7 @@ const MODES = [
 
 const BecomeTutor = () => {
     const navigate = useNavigate();
-    const { user, accessToken, refreshUser } = useAuth();
+    const { user, accessToken} = useAuth();
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [profilePhoto, setProfilePhoto] = useState(null);
@@ -279,9 +279,6 @@ const BecomeTutor = () => {
             }
 
             toast.success('Tutor profile created successfully! 🎓');
-
-            // The account is now a tutor - reload it so the tutor dashboard lets us in.
-            await refreshUser();
 
             navigate('/dashboard/tutor');
 

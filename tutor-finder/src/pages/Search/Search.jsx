@@ -60,7 +60,8 @@ const Search = () => {
     if (filters.query) {
       const q = filters.query.toLowerCase();
       results = results.filter(t =>
-        t.name?.toLowerCase().includes(q) ||
+        t.firstName?.toLowerCase().includes(q) ||
+        t.lastName?.toLowerCase().includes(q) ||
         t.bio?.toLowerCase().includes(q) ||
         t.location?.toLowerCase().includes(q) ||
         t.subjects?.some(s => s.toLowerCase().includes(q)) ||

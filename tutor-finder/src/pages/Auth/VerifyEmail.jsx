@@ -5,10 +5,9 @@ import { motion } from 'framer-motion';
 import { FaEnvelope, FaLock, FaHeadphones, FaUserPlus, FaCheck, FaTimes } from 'react-icons/fa';
 
 // EmailVerification Component
-const EmailVerification = ({ email, onVerificationSuccess, onBack }) => {
+const EmailVerification = ({ email, onVerificationSuccess, onBack, error, setError}) => {
     const [code, setCode] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
     const [resendDisabled, setResendDisabled] = useState(false);
     const [countdown, setCountdown] = useState(0);
 
@@ -100,7 +99,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBack }) => {
                     className={`input-field text-center text-2xl tracking-widest ${error ? 'error' : ''}`}
                     placeholder="Enter 6-digit code"
                 />
-                {error && <p className="input-error">{error}</p>}
+                {error && <p className="input-error error">{error}</p>}
             </div>
 
             <button

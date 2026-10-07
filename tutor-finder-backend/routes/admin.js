@@ -11,7 +11,7 @@ const { updateTutorListing } = require("../controller/admin/updateTutorListing")
 const { deleteUser } = require("../controller/admin/deleteUser");
 const { getBookings } = require("../controller/admin/getBookings");
 const { getAdmins, createAdmin } = require("../controller/admin/admins");
-const { updateBookingStatus } = require("../controller/bookings/updateBookingStatus");
+const { updateBookingStatus } = require("../controller/bookings/updateBooking");
 
 const admin = express.Router();
 

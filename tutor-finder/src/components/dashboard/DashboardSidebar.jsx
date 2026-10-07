@@ -10,23 +10,46 @@ import {
   FaUser,
   FaCog,
   FaSignOutAlt,
+  FaUsers,
+  FaMoneyBillWave,
   FaArrowUp
 } from 'react-icons/fa';
+import GetLocationButton from '../../pages/TutorDashboard/components/GetLocationButton';
 
-const DashboardSidebar = () => {
+const DashboardSidebar = ({ userType }) => {
   const { user, logout } = useAuth();
-  const location = useLocation();
+    const location = useLocation();
 
-  const links = [
+    const API_URL = import.meta.env.VITE_ENDPOINT_URL;
+    
+    const getImageUrl = (photo) => {
+      if (!photo) return null;
+      if (
+        photo.startsWith('http://') ||
+        photo.startsWith('https://') ||
+        photo.startsWith('data:')
+      ) {
+        return photo;
+      }
+    return `${API_URL}${photo.startsWith('/') ? '' : '/'}${photo}`;
+  };
+
+  const studentLinks = [
     { to: '/dashboard/student', icon: FaHome, label: 'Overview' },
-    { to: '/dashboard/student/lessons', icon: FaCalendarAlt, label: 'My Lessons' },
     { to: '/search', icon: FaBook, label: 'Find Tutors' },
-    { to: '/dashboard/student/saved', icon: FaHeart, label: 'Saved Tutors' },
     { to: '/messages', icon: FaComment, label: 'Messages' },
-    { to: '/dashboard/student/profile', icon: FaUser, label: 'Profile' },
     { to: '/dashboard/student/settings', icon: FaCog, label: 'Settings' },
     { to: '/dashboard/student/become-tutor', icon: FaArrowUp, label: 'Become a Tutor' },
   ];
+
+  const tutorLinks = [
+    { to: '/dashboard/tutor', icon: FaHome, label: 'Overview' },
+    { to: '/dashboard/tutor/bookings', icon: FaCalendarAlt, label: 'Bookings' },
+    { to: '/messages', icon: FaComment, label: 'Messages' },
+    { to: '/dashboard/tutor/settings', icon: FaCog, label: 'Settings' },
+  ];
+
+  const links = userType === 'tutor' ? tutorLinks : studentLinks;
 
   return (
     <aside className="w-64 min-w-64 flex-shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto overflow-x-hidden hidden md:block">
@@ -37,7 +60,7 @@ const DashboardSidebar = () => {
           <div className="w-10 h-10 min-w-10 flex-shrink-0 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center text-white font-bold overflow-hidden">
             {user?.profilePic ? (
               <img
-                src={user.profilePic}
+                src={getImageUrl(user.profilePic)}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
@@ -51,8 +74,8 @@ const DashboardSidebar = () => {
               {user?.email || 'User'}
             </p>
 
-            <p className="text-xs text-gray-500 truncate">
-              Student
+            <p className="text-xs text-gray-500 capitalize truncate">
+              {userType}
             </p>
           </div>
         </div>
@@ -99,6 +122,8 @@ const DashboardSidebar = () => {
 
         {/* Bottom actions */}
         <div className="border-t border-gray-200 mt-6 pt-6 min-w-0">
+          <GetLocationButton />
+
           <button
             onClick={logout}
             className="flex items-center gap-3 px-4 py-2.5 w-full min-w-0 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all duration-200"

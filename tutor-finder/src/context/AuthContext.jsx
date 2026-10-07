@@ -1,8 +1,7 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
-const ACCESS_TOKEN_KEY = "accessToken";
 
 // hook
 export const useAuth = () => {
@@ -22,7 +21,6 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
-    const authCheckStarted = useRef(false);
 
 // token helpers
     const decodeAccessToken = (token = accessToken) => {
@@ -64,32 +62,24 @@ export const AuthProvider = ({ children }) => {
             const data = await res.json();
 
             if (!res.ok || !data.accessToken) {
+                logout();
                 setUser(null);
-                setProfile(null);
                 setAccessToken(null);
                 setIsLoggedIn(false);
-                localStorage.removeItem(ACCESS_TOKEN_KEY);
                 return null;
             }
 
             setAccessToken(data.accessToken);
-            localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
             return data.accessToken;
 
         } 
         catch (error) {
-            setUser(null);
-            setProfile(null);
-            setAccessToken(null);
-            setIsLoggedIn(false);
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            logout();
             return null;
         }
     };
 
     useEffect(() => {
-        if (!isLoggedIn) return undefined;
-
         const interval = setInterval(async () => {
             try {
                 await refreshAccessToken();
@@ -99,7 +89,7 @@ export const AuthProvider = ({ children }) => {
         }, 14 * 60 * 1000); // 14 minutes
 
         return () => clearInterval(interval);
-    }, [isLoggedIn]);
+    }, []);
 
   // fetch the full user data here
     const fetchUser = async (token) => {
@@ -120,13 +110,14 @@ export const AuthProvider = ({ children }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
+            await logout()
             setUser(null);
-            setProfile(null);
             setAccessToken(null);
             setIsLoggedIn(false);
             return null;
         }
         setUser(data.user);
+        console.log(data)
 
         setProfile(data.user?.profile);
         return data.user;
@@ -160,14 +151,13 @@ export const AuthProvider = ({ children }) => {
             console.log(data);
 
             setAccessToken(data.accessToken);
-            localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
 
             const decoded = decodeAccessToken(data.accessToken);
             setIsLoggedIn(true);
 
-            const loggedInUser = await fetchUser(data.accessToken);
+            await fetchUser(data.accessToken);
 
-            return { success: true, role: loggedInUser?.role || data.user?.role };
+            return { success: true };
 
         } catch (error) {
             setAuthError(error.message);
@@ -182,7 +172,6 @@ export const AuthProvider = ({ children }) => {
             setProfile(null);
             setAccessToken(null);
             setIsLoggedIn(false);
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
 
             await fetch(
                 `${import.meta.env.VITE_ENDPOINT_URL}/api/auth/logout`,
@@ -198,8 +187,6 @@ export const AuthProvider = ({ children }) => {
 
     // initial auth check
     const checkAuth = async () => {
-        if (authCheckStarted.current) return;
-        authCheckStarted.current = true;
         setIsLoading(true);
 
         try {
@@ -220,11 +207,7 @@ export const AuthProvider = ({ children }) => {
 
         } catch (error) {
             setAuthError("Authentication error");
-            setUser(null);
-            setProfile(null);
-            setAccessToken(null);
-            setIsLoggedIn(false);
-            localStorage.removeItem(ACCESS_TOKEN_KEY);
+            logout();
         }
 
         setIsLoading(false);
@@ -234,26 +217,17 @@ export const AuthProvider = ({ children }) => {
         checkAuth();
     }, []);
 
-    // re-fetch the signed-in user (and tutor profile) after a profile update
-    const refreshUser = async () => {
-        const token = await getValidAccessToken();
-        if (!token) return null;
-        return await fetchUser(token);
-    };
-
     // context values
     const value = {
         user,
         profile,
         accessToken,
         isLoggedIn,
-        isAuthenticated: isLoggedIn,
         isLoading,
         authError,
 
         login: loginUser,
         logout,
-        refreshUser,
 
         getValidAccessToken,
         decodeAccessToken,

@@ -8,45 +8,38 @@ import BookingModal from './components/BookingModal';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
 import { tutorService } from '../../services/tutorService';
-import { useLiveLocation } from '../../hooks/useLiveLocation';
 
 const TutorProfile = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [tutor, setTutor] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const { user } = useAuth();
-  const { location: studentLocation } = useLiveLocation(Boolean(user));
+
+  const loadTutor = async () => {
+    setLoading(true);
+    try {
+      const data = await tutorService.getTutorById(id);
+      setTutor(data);
+      setReviews(data?.reviews || []);
+    } catch (error) {
+      console.error('Error loading tutor:', error);
+      setTutor(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const loadTutor = async (showLoading = false) => {
-      if (showLoading && !tutor) setLoading(true);
-      try {
-        const data = await tutorService.getTutorById(id, studentLocation);
-        if (isMounted) setTutor(data);
-      } catch (error) {
-        console.error('Error loading tutor:', error);
-        if (isMounted) setTutor(null);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    loadTutor(true);
-
-    const refreshTimer = window.setInterval(() => loadTutor(false), 15000);
-    return () => {
-      isMounted = false;
-      window.clearInterval(refreshTimer);
-    };
-  }, [id, studentLocation]);
+    loadTutor();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
-    // Check if we should open booking modal from URL
     const params = new URLSearchParams(location.search);
     if (params.get('book') === 'true') {
       setShowBookingModal(true);
@@ -77,10 +70,7 @@ const TutorProfile = () => {
           title="Tutor Not Found"
           description="The tutor you're looking for doesn't exist or has been removed."
           action={
-            <button
-              onClick={() => navigate('/search')}
-              className="btn-primary"
-            >
+            <button onClick={() => navigate('/search')} className="btn-primary">
               Find Other Tutors
             </button>
           }
@@ -93,28 +83,16 @@ const TutorProfile = () => {
     <div className="bg-gray-50 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-8">
-          {/* Profile Header */}
-          <ProfileHeader 
-            tutor={tutor} 
-            onBookSession={handleBookSession}
-          />
-
-          {/* Profile Info */}
-          <ProfileInfo tutor={tutor} studentLocation={studentLocation} />
-
-          {/* Reviews Section */}
-          <ReviewsSection 
-            reviews={tutor.reviews || []} 
-            tutorId={tutor.id}
-            onReviewAdded={() => {
-              // Refresh reviews
-              tutorService.getTutorById(id, studentLocation).then(setTutor);
-            }}
+          <ProfileHeader tutor={tutor} onBookSession={handleBookSession} />
+          <ProfileInfo tutor={tutor} />
+          <ReviewsSection
+            reviews={reviews}
+            tutorId={tutor.userId}
+            onReviewAdded={loadTutor}
           />
         </div>
       </div>
 
-      {/* Booking Modal */}
       <BookingModal
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}

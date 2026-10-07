@@ -3,7 +3,6 @@
 
 let cachedCoords = null;
 let locationPromise = null;
-let locationAttempted = false;
 
 export const getUserLocation = (force = false) => {
     // Return cached coordinates if available
@@ -11,17 +10,11 @@ export const getUserLocation = (force = false) => {
         return Promise.resolve(cachedCoords);
     }
 
-    // A failed or denied request should not be repeated for every tutor request.
-    if (!force && locationAttempted) {
-        return Promise.resolve(null);
-    }
-
     // If a location request is already running, reuse it
     if (!force && locationPromise) {
         return locationPromise;
     }
 
-    locationAttempted = true;
     locationPromise = new Promise((resolve) => {
         if (!navigator.geolocation) {
             locationPromise = null;
@@ -39,7 +32,9 @@ export const getUserLocation = (force = false) => {
                 locationPromise = null;
                 resolve(cachedCoords);
             },
-            () => {
+            (err) => {
+                console.warn('Geolocation failed:', err.message);
+
                 locationPromise = null;
                 resolve(null);
             },

@@ -1,1 +1,17 @@
 node_modules
+# test artifacts
+*.json.bak
+booking.json
+confirm.json
+login_test.json
+login_tutor.json
+pay.json
+review.json
+signup_test.json
+signup_tutor.json
+test_create_tutor.js
+test_photo.jpg
+trace.txt
+curl_output.txt
+signup_test.json
+uploads/profiles/*

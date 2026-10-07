@@ -1,28 +1,32 @@
 import React from 'react';
 import MainLayout from '../layouts/MainLayout';
 import DashboardLayout from '../layouts/DashboardLayout';
-import TutorDashboardLayout from '../layouts/TutorDashboardLayout';
 import AdminDashboardLayout from '../layouts/AdminDashboardLayout';
+
 import Landing from '../pages/Landing/Landing';
 import Search from '../pages/Search/Search';
 import TutorProfile from '../pages/TutorProfile/TutorProfile';
+
 import StudentDashboard from '../pages/StudentDashboard/StudentDashboard';
 import TutorDashboard from '../pages/TutorDashboard/TutorDashboard';
-import TutorBookings from '../pages/TutorDashboard/Bookings';
-import TutorEarnings from '../pages/TutorDashboard/Earnings';
-import TutorStudents from '../pages/TutorDashboard/Students';
-import TutorProfileSettings from '../pages/TutorDashboard/Profile';
-import TutorSettings from '../pages/TutorDashboard/Settings';
+
+import Login from '../pages/Auth/Login';
+import Register from '../pages/Auth/Register';
+import ForgotPassword from '../pages/Auth/ForgotPassword';
+
+import BecomeTutor from '../pages/StudentDashboard/components/BecomeTutor';
+import StudentProfileEdit from '../pages/StudentDashboard/components/updateProfile';
+
+import TutorBookings from '../pages/TutorDashboard/components/bookings';
+import TutorProfileEdit from '../pages/TutorDashboard/components/tutorProfileUpdate';
+import Messages from '../pages/TutorDashboard/components/messages';
+import ChatList from '../pages/TutorDashboard/components/ChatList';
+
 import AdminDashboard from '../pages/AdminDashboard/AdminDashboard';
 import AdminStudents from '../pages/AdminDashboard/Students';
 import AdminTutors from '../pages/AdminDashboard/Tutors';
 import AdminBookings from '../pages/AdminDashboard/Bookings';
 import AdminAdmins from '../pages/AdminDashboard/Admins';
-import Login from '../pages/Auth/Login';
-import Register from '../pages/Auth/Register';
-import ForgotPassword from '../pages/Auth/ForgotPassword';
-import Messages from '../pages/Messages/Messages';
-import BecomeTutor from '../pages/StudentDashboard/components/BecomeTutor';
 
 export const routes = [
   {
@@ -51,22 +55,18 @@ export const routes = [
   },
   {
     path: '/login',
-    element: (
-        <Login />
-    ),
+    element: <Login />,
   },
   {
     path: '/register',
-    element: (
-        <Register />
-    ),
+    element: <Register />,
   },
   {
     path: '/forgot-password',
-    element: (
-        <ForgotPassword />
-    ),
+    element: <ForgotPassword />,
   },
+
+  // Student Dashboard
   {
     path: '/dashboard/student',
     element: (
@@ -84,53 +84,41 @@ export const routes = [
     ),
   },
   {
+    path: '/dashboard/student/settings',
+    element: (
+      <MainLayout>
+        <StudentProfileEdit />
+      </MainLayout>
+    ),
+  },
+
+  // Tutor Dashboard
+  {
     path: '/dashboard/tutor',
     element: (
-      <TutorDashboardLayout>
+      <DashboardLayout>
         <TutorDashboard />
-      </TutorDashboardLayout>
+      </DashboardLayout>
     ),
   },
   {
     path: '/dashboard/tutor/bookings',
     element: (
-      <TutorDashboardLayout>
+      <MainLayout>
         <TutorBookings />
-      </TutorDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/tutor/earnings',
-    element: (
-      <TutorDashboardLayout>
-        <TutorEarnings />
-      </TutorDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/tutor/students',
-    element: (
-      <TutorDashboardLayout>
-        <TutorStudents />
-      </TutorDashboardLayout>
-    ),
-  },
-  {
-    path: '/dashboard/tutor/profile',
-    element: (
-      <TutorDashboardLayout>
-        <TutorProfileSettings />
-      </TutorDashboardLayout>
+      </MainLayout>
     ),
   },
   {
     path: '/dashboard/tutor/settings',
     element: (
-      <TutorDashboardLayout>
-        <TutorSettings />
-      </TutorDashboardLayout>
+      <MainLayout>
+        <TutorProfileEdit />
+      </MainLayout>
     ),
   },
+
+  // Admin Dashboard
   {
     path: '/dashboard/admin',
     element: (
@@ -171,11 +159,21 @@ export const routes = [
       </AdminDashboardLayout>
     ),
   },
+
+  // Chat
+  {
+    path: '/chat/:chatId',
+    element: (
+      <MainLayout>
+        <Messages />
+      </MainLayout>
+    ),
+  },
   {
     path: '/messages',
     element: (
       <MainLayout>
-        <Messages />
+        <ChatList />
       </MainLayout>
     ),
   },

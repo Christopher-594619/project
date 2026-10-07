@@ -1,12 +1,14 @@
 const express = require("express");
 const {getCurrentUser} = require("../controller/users/me");
-const {updateUser} = require("../controller/users/updateUser");
+const {updateUserProfile, updateUserPassword} = require("../controller/users/updateUser");
+const {upload} = require("../controller/common/upload")
 
 const {authenticate} = require("../controller/auth/authenticate");
 
 const users = express.Router();
 
 users.get("/me", authenticate, getCurrentUser);
-users.post("/update", authenticate, updateUser);
+users.patch("/profile", authenticate, upload.single("photo"), updateUserProfile);
+users.patch("/password", authenticate, updateUserPassword);
 
 module.exports = {users}

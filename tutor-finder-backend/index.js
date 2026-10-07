@@ -12,9 +12,8 @@ const {users} = require("./routes/users")
 const {public} = require("./routes/public");
 const {auth} = require("./routes/signup")
 const {tutors}= require("./routes/tutors");
-const {admin} = require("./routes/admin");
-const {bookings} = require("./routes/bookings");
-const {notifications} = require("./routes/notifications");
+const {bookings} = require("./routes/bookings")
+const {chats} = require("./routes/chats")
 
 
 const app = express();
@@ -44,9 +43,8 @@ app.use("/", public);
 app.use("/api/auth", auth);
 app.use("/api/users", users)
 app.use("/api/tutors", tutors)
-app.use("/api/admin", admin)
 app.use("/api/bookings", bookings)
-app.use("/api/notifications", notifications)
+app.use("/api/chats", chats);
 
 app.get(/.*/, (req, res) => {
   // Skip API routes (should already be handled above)

@@ -39,6 +39,8 @@ const searchTutors = async (req, res) => {
                 u.name AS tutor_name,
                 u.email AS tutor_email,
                 u.phone AS tutor_phone,
+                u.firstName As tutor_first_name,
+                u.lastName AS tutor_last_name,
                 ${distanceSelect}
             FROM tutor_profiles tp
             INNER JOIN users u ON tp.user_id = u.id
