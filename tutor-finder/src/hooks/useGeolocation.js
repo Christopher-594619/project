@@ -9,8 +9,6 @@ export const useGeolocation = () => {
     if (!navigator.geolocation) {
       setError('Geolocation is not supported by your browser');
       setIsLoading(false);
-      // Fallback to default location
-      setLocation({ lat: 40.7128, lng: -74.0060 });
       return;
     }
 
@@ -25,13 +23,12 @@ export const useGeolocation = () => {
       (err) => {
         setError(err.message);
         setIsLoading(false);
-        // Fallback to New York City
-        setLocation({ lat: 40.7128, lng: -74.0060 });
+        setLocation(null);
       },
       {
         enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0,
+        timeout: 15000,
+        maximumAge: 60000,
       }
     );
   }, []);

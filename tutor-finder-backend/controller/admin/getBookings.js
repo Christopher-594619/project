@@ -1,5 +1,4 @@
 const { db } = require("../../modal/db");
-const { mapRow } = require("../bookings/getMyBookings");
 
 // ==================== LIST ALL BOOKINGS (ADMIN) ====================
 const getBookings = async (req, res) => {
@@ -54,7 +53,12 @@ const getBookings = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            bookings: rows.map(mapRow),
+            bookings: rows.map((row) => ({
+                ...row,
+                studentName: row.student_name || "Student",
+                tutorName: row.tutor_name || "Tutor",
+                totalAmount: parseFloat(row.price) || 0
+            })),
             pagination: {
                 page,
                 limit,

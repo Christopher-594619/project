@@ -179,7 +179,7 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `firstName`, `lastName`, `email`, `phone`, `password`, `role`, `created_at`, `profile_pic`, `bio`) VALUES
-('08bfe6fe-e298-4dbe-8db5-35369861136b', 'Celine', 'Soko', 'mrodneyk406@gmail.com', '0977651841', '$2b$10$w2nIEi2hYzytdX747ahkG.JGP0g0RwVim/945uTr4eyLL8uIhPa0a', 'tutor', '2026-09-24 16:02:08', '/uploads/profiles/08bfe6fe-e298-4dbe-8db5-35369861136b_1790266073283.avif', 'i love tutoring'),
+('08bfe6fe-e298-4dbe-8db5-35369861136s', 'Admi', 'Soko', 'mrodneyk407@gmail.com', '0977651841', '$2b$10$w2nIEi2hYzytdX747ahkG.JGP0g0RwVim/945uTr4eyLL8uIhPa0a', 'admin', '2026-09-24 16:02:08', '/uploads/profiles/08bfe6fe-e298-4dbe-8db5-35369861136b_1790266073283.avif', 'i love tutoring'),
 ('10d3d992-2b77-475b-abee-dec0d407475d', 'Joshua', 'Njobvu', 'moses.kaluba@cs.unza.zm', '0977651842', '$2b$10$4VGwoJ8jZC98aLFJJCNFDuEVEypKIof.vSyv6QuLHguXHnbJ8WJnS', 'student', '2026-09-24 15:59:48', '/uploads/profiles/10d3d992-2b77-475b-abee-dec0d407475d_1790268115117.webp', 'i am commited to learning');
 
 --

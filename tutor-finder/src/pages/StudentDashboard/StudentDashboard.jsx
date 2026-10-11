@@ -7,19 +7,25 @@ import {
   FaCheckCircle,
   FaHourglassHalf,
   FaCommentDots,
+  FaBook,
+  FaArrowUp,
+  FaCog,
 } from 'react-icons/fa';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import StatsCard from '../../components/dashboard/StatsCard';
 import { formatters } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_ENDPOINT_URL;
 
 const StudentDashboard = () => {
-  const { user, accessToken } = useAuth();
+  const { user, accessToken, isLoading: authLoading, authError } = useAuth();
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingError, setBookingError] = useState(null);
+  const [reloadBookings, setReloadBookings] = useState(0);
   const [openingChatId, setOpeningChatId] = useState(null);
 
   // Convert booking -> Date object combining date + time
@@ -46,9 +52,22 @@ const StudentDashboard = () => {
   }
 
   useEffect(() => {
+    let active = true;
+
     const load = async () => {
-      if (!user) return;
+      if (authLoading) {
+        setLoading(true);
+        return;
+      }
+
+      if (!user || !accessToken) {
+        setBookings([]);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
+      setBookingError(null);
 
       try {
         const res = await fetch(`${API_URL}/api/bookings`, {
@@ -59,16 +78,24 @@ const StudentDashboard = () => {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Failed to load bookings');
-        setBookings(data.bookings || []);
+        if (!Array.isArray(data.bookings)) {
+          throw new Error(data.message || 'Unexpected bookings response');
+        }
+        if (active) setBookings(data.bookings);
       } catch (err) {
-        console.error('Error loading bookings:', err);
-        setBookings([]);
+        if (active) {
+          setBookingError(err.message || 'Failed to load bookings');
+          setBookings([]);
+        }
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     load();
-  }, [user, accessToken]);
+    return () => {
+      active = false;
+    };
+  }, [user, accessToken, authLoading, reloadBookings]);
 
   const now = new Date();
 
@@ -125,13 +152,71 @@ const StudentDashboard = () => {
         <p className="text-gray-600 mt-1">Here's your learning overview</p>
       </div>
 
+      {authError && (
+        <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-amber-900">
+          Your account details could not be loaded: {authError}
+        </p>
+      )}
+
+      <section aria-label="Student dashboard shortcuts" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Link to="/search" className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-700 hover:border-primary-300 hover:text-primary-700">
+          <FaBook className="shrink-0 text-primary-600" />
+          Find tutors
+        </Link>
+        <Link to="/messages" className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-700 hover:border-primary-300 hover:text-primary-700">
+          <FaCommentDots className="shrink-0 text-primary-600" />
+          Messages
+        </Link>
+        <Link to="/dashboard/student/become-tutor" className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-700 hover:border-primary-300 hover:text-primary-700">
+          <FaArrowUp className="shrink-0 text-primary-600" />
+          Become a tutor
+        </Link>
+        <Link to="/dashboard/student/settings" className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-sm font-medium text-gray-700 hover:border-primary-300 hover:text-primary-700">
+          <FaCog className="shrink-0 text-primary-600" />
+          Settings
+        </Link>
+      </section>
+
       {loading ? (
         <>
           <LoadingSkeleton type="text" count={2} />
           <LoadingSkeleton type="text" count={4} />
         </>
+      ) : bookingError ? (
+        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-900">
+          <p className="font-semibold">Your sessions could not be loaded.</p>
+          <p className="mt-1 text-sm">{bookingError}</p>
+          <button
+            type="button"
+            onClick={() => setReloadBookings((value) => value + 1)}
+            className="mt-4 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800"
+          >
+            Try again
+          </button>
+        </div>
       ) : (
         <>
+          <section aria-label="Student statistics" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <StatsCard
+              title="Upcoming sessions"
+              value={upcoming.length}
+              icon={FaCalendarAlt}
+              color="bg-blue-100 text-blue-700"
+            />
+            <StatsCard
+              title="Completed sessions"
+              value={completed.length}
+              icon={FaCheckCircle}
+              color="bg-green-100 text-green-700"
+            />
+            <StatsCard
+              title="Total bookings"
+              value={bookings.length}
+              icon={FaHourglassHalf}
+              color="bg-amber-100 text-amber-700"
+            />
+          </section>
+
           {/* NEXT SESSION */}
           {nextBooking && (
             <div className="bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl shadow-hard p-6 text-white">

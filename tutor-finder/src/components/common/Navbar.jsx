@@ -127,8 +127,12 @@ const Navbar = () => {
     navigate('/');
   };
 
-  const dashboardPath =
-    user?.role === 'tutor' ? '/dashboard/tutor' : '/dashboard/student';
+  const dashboardPath = {
+    tutor: '/dashboard/tutor',
+    student: '/dashboard/student',
+    admin: '/dashboard/admin',
+  }[user?.role] || '/';
+  
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -231,7 +235,7 @@ const Navbar = () => {
                               .filter(Boolean)
                               .join(' ') || 'User'}
                           </p>
-                          <p className="text-xs text-gray-500 truncate mt-0.5">
+                          <p className="ext-xs text-gray-500 truncate mt-0.5">
                             {user?.email}
                           </p>
                           {user?.role && (

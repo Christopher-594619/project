@@ -70,7 +70,7 @@ export const routes = [
   {
     path: '/dashboard/student',
     element: (
-      <DashboardLayout>
+      <DashboardLayout requiredRole="student">
         <StudentDashboard />
       </DashboardLayout>
     ),
@@ -78,7 +78,7 @@ export const routes = [
   {
     path: '/dashboard/student/become-tutor',
     element: (
-      <DashboardLayout>
+      <DashboardLayout requiredRole="student">
         <BecomeTutor />
       </DashboardLayout>
     ),
@@ -96,7 +96,7 @@ export const routes = [
   {
     path: '/dashboard/tutor',
     element: (
-      <DashboardLayout>
+      <DashboardLayout requiredRole="tutor">
         <TutorDashboard />
       </DashboardLayout>
     ),

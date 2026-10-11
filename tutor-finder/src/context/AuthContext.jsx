@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -21,6 +21,8 @@ export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+    const authVersionRef = useRef(0);
+    const refreshPromiseRef = useRef(null);
 
 // token helpers
     const decodeAccessToken = (token = accessToken) => {
@@ -53,49 +55,50 @@ export const AuthProvider = ({ children }) => {
 
   // refresh token via httpOnly cookie
     const refreshAccessToken = async () => {
-        try {
-            const res = await fetch(`${import.meta.env.VITE_ENDPOINT_URL}/api/auth/refresh`,{
-                method: "POST",
-                credentials: "include"
-            });
+        if (refreshPromiseRef.current) return refreshPromiseRef.current;
 
-            const data = await res.json();
+        const authVersion = authVersionRef.current;
+        const refreshPromise = (async () => {
+            try {
+                const res = await fetch(`${import.meta.env.VITE_ENDPOINT_URL}/api/auth/refresh`, {
+                    method: "POST",
+                    credentials: "include"
+                });
+                const data = await res.json().catch(() => ({}));
 
-            if (!res.ok || !data.accessToken) {
-                logout();
-                setUser(null);
-                setAccessToken(null);
-                setIsLoggedIn(false);
+                if (!res.ok || !data.accessToken) return null;
+
+                if (authVersionRef.current === authVersion) {
+                    setAccessToken(data.accessToken);
+                }
+                return data.accessToken;
+            } catch {
                 return null;
             }
+        })().finally(() => {
+            if (refreshPromiseRef.current === refreshPromise) {
+                refreshPromiseRef.current = null;
+            }
+        });
 
-            setAccessToken(data.accessToken);
-            return data.accessToken;
-
-        } 
-        catch (error) {
-            logout();
-            return null;
-        }
+        refreshPromiseRef.current = refreshPromise;
+        return refreshPromise;
     };
 
     useEffect(() => {
+        if (!isLoggedIn) return undefined;
+
         const interval = setInterval(async () => {
-            try {
-                await refreshAccessToken();
-            } catch (err) {
-                console.error("Token refresh failed:", err);
-            }
+            await refreshAccessToken();
         }, 14 * 60 * 1000); // 14 minutes
 
         return () => clearInterval(interval);
-    }, []);
+    }, [isLoggedIn]);
 
   // fetch the full user data here
-    const fetchUser = async (token) => {
+    const fetchUser = async (token, authVersion = authVersionRef.current) => {
         try {
         if (!token) {
-            console.log("No access token available");
             return null;
         }
 
@@ -110,26 +113,29 @@ export const AuthProvider = ({ children }) => {
         const data = await res.json();
 
         if (!res.ok || !data.success) {
-            await logout()
-            setUser(null);
-            setAccessToken(null);
-            setIsLoggedIn(false);
+            if (authVersionRef.current === authVersion) {
+                setAuthError(data.message || "Unable to load your account");
+            }
             return null;
         }
-        setUser(data.user);
-        console.log(data)
-
-        setProfile(data.user?.profile);
+        if (authVersionRef.current === authVersion) {
+            setUser(data.user);
+            setProfile(data.user?.profile ?? null);
+        }
         return data.user;
 
         } catch (error) {
-            console.log("Error fetching user:", error);
+            if (authVersionRef.current === authVersion) {
+                setAuthError(error.message || "Unable to load your account");
+            }
             return null;
         }
     };
 
     // login
     const loginUser = async (email, password) => {
+        const authVersion = ++authVersionRef.current;
+        setIsLoading(true);
         try {
             setAuthError(null);
 
@@ -148,25 +154,27 @@ export const AuthProvider = ({ children }) => {
                 throw new Error(data.message || "Login failed");
             }
 
-            console.log(data);
-
+            setUser(data.user || null);
             setAccessToken(data.accessToken);
-
-            const decoded = decodeAccessToken(data.accessToken);
             setIsLoggedIn(true);
 
-            await fetchUser(data.accessToken);
+            await fetchUser(data.accessToken, authVersion);
 
             return { success: true };
 
         } catch (error) {
             setAuthError(error.message);
             return { success: false, error: error.message };
+        } finally {
+            if (authVersionRef.current === authVersion) {
+                setIsLoading(false);
+            }
         }
     };
 
     // logout
     const logout = async () => {
+        authVersionRef.current += 1;
         try {
             setUser(null);
             setProfile(null);
@@ -188,29 +196,27 @@ export const AuthProvider = ({ children }) => {
     // initial auth check
     const checkAuth = async () => {
         setIsLoading(true);
+        const authVersion = authVersionRef.current;
 
         try {
             const token = await refreshAccessToken();
 
-            if (!token) {
-                setIsLoading(false);
-                return;
-            }
-
-            const decoded = decodeAccessToken(token);
+            if (!token || authVersionRef.current !== authVersion) return;
 
             setAccessToken(token);
             setIsLoggedIn(true);
 
-            // IMPORTANT: pass token directly
-            await fetchUser(token);
+            await fetchUser(token, authVersion);
 
         } catch (error) {
-            setAuthError("Authentication error");
-            logout();
+            if (authVersionRef.current === authVersion) {
+                setAuthError("Authentication error");
+            }
+        } finally {
+            if (authVersionRef.current === authVersion) {
+                setIsLoading(false);
+            }
         }
-
-        setIsLoading(false);
     };
 
     useEffect(() => {

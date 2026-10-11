@@ -33,14 +33,12 @@ export const getUserLocation = (force = false) => {
                 resolve(cachedCoords);
             },
             (err) => {
-                console.warn('Geolocation failed:', err.message);
-
                 locationPromise = null;
                 resolve(null);
             },
             {
                 enableHighAccuracy: true,
-                timeout: 8000,
+                timeout: 15000,
                 maximumAge: 60000,
             }
         );

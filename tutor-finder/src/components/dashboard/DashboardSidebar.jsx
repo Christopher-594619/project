@@ -12,7 +12,10 @@ import {
   FaSignOutAlt,
   FaUsers,
   FaMoneyBillWave,
-  FaArrowUp
+  FaArrowUp,
+  FaUserGraduate,
+  FaChalkboardTeacher,
+  FaUserShield
 } from 'react-icons/fa';
 import GetLocationButton from '../../pages/TutorDashboard/components/GetLocationButton';
 
@@ -49,7 +52,24 @@ const DashboardSidebar = ({ userType }) => {
     { to: '/dashboard/tutor/settings', icon: FaCog, label: 'Settings' },
   ];
 
-  const links = userType === 'tutor' ? tutorLinks : studentLinks;
+  const adminLinks = [
+    { to: '/dashboard/admin', icon: FaHome, label: 'Overview', end: true },
+    { to: '/dashboard/admin/students', icon: FaUserGraduate, label: 'Students' },
+    { to: '/dashboard/admin/tutors', icon: FaChalkboardTeacher, label: 'Tutors' },
+    { to: '/dashboard/admin/bookings', icon: FaCalendarAlt, label: 'Bookings' },
+    { to: '/dashboard/admin/admins', icon: FaUserShield, label: 'Admins' },
+  ];
+
+  let links = "";
+  if(userType === "tutor"){
+    links = tutorLinks;
+  }
+  else if(userType === "admin"){
+    links = "adminLinks";sssss
+  }
+  else{
+    links = studentLinks;
+  }
 
   return (
     <aside className="w-64 min-w-64 flex-shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto overflow-x-hidden hidden md:block">

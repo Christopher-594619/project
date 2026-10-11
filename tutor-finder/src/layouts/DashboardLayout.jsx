@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import DashboardSidebar from '../components/dashboard/DashboardSidebar';
 import { Navigate } from 'react-router-dom';
 
-const DashboardLayout = ({ children }) => {
+const DashboardLayout = ({ children, requiredRole }) => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
@@ -16,6 +16,15 @@ const DashboardLayout = ({ children }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && user.role !== requiredRole) {
+    const destination = user.role === 'tutor'
+      ? '/dashboard/tutor'
+      : user.role === 'student'
+        ? '/dashboard/student'
+        : '/';
+    return <Navigate to={destination} replace />;
   }
 
   return (

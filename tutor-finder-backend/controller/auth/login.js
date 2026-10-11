@@ -71,6 +71,9 @@ const login = async (req, res) => {
       message: "Login successful",
       accessToken,
       user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role
       }
     });

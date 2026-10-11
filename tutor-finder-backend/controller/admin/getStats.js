@@ -31,7 +31,7 @@ const getStats = async (req, res) => {
                 SUM(status = 'pending') AS pendingBookings,
                 SUM(status = 'confirmed') AS confirmedBookings,
                 SUM(status = 'completed') AS completedBookings,
-                COALESCE(SUM(CASE WHEN status = 'completed' THEN total_amount ELSE 0 END), 0) AS totalRevenue
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN price ELSE 0 END), 0) AS totalRevenue
             FROM bookings
             `
         );

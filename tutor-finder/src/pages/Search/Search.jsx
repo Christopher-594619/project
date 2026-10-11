@@ -96,7 +96,7 @@ const Search = () => {
     }
 
     // Distance
-    if (filters.distance && filters.distance !== 0) {
+    if (location && filters.distance && filters.distance !== 0) {
       results = results.filter(t => (t.distance || 0) <= filters.distance);
     }
 
@@ -119,11 +119,11 @@ const Search = () => {
       if ((b.rating || 0) !== (a.rating || 0)) {
         return (b.rating || 0) - (a.rating || 0);
       }
-      return (a.distance || 0) - (b.distance || 0);
+      return location ? (a.distance || 0) - (b.distance || 0) : 0;
     });
 
     return results;
-  }, [tutors, filters]);
+  }, [tutors, filters, location]);
 
   // ==================== HANDLERS ====================
   const handleFilterChange = (key, value) => {
