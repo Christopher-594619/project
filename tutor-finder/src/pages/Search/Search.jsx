@@ -1,8 +1,9 @@
 // src/pages/Search/Search.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useGeolocation } from '../../hooks/useGeolocation';
+import { getUserLocation } from '../../utils/location';
 import TutorCard from '../../components/common/TutorCard';
+import StudentLocationPanel from '../../components/common/StudentLocationPanel';
 import SearchFilters from './components/SearchFilters';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
@@ -11,7 +12,11 @@ import { tutorService } from '../../services/tutorService';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { location } = useGeolocation();
+  // The student's own position. It's the same cached position tutorService
+  // sends to the backend, so the distances it returns are measured from here.
+  const [location, setLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState('detecting');
+  const [nearbyOnly, setNearbyOnly] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [tutors, setTutors] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -23,15 +28,22 @@ const Search = () => {
     level: '',
     mode: '',
     distance: 10,
-    priceRange: [0, 200],
+    priceRange: [0, ''], // empty max = any price, so no tutor is hidden by default
     rating: 0,
     availability: '',
   });
 
   // ==================== FETCH TUTORS FROM BACKEND ====================
-  const fetchTutors = useCallback(async () => {
+  // forceLocation = true asks the browser for the position again
+  // (the "Use my location" / "Update my location" buttons).
+  const fetchTutors = useCallback(async (forceLocation = false) => {
     setIsLoading(true);
     setError(null);
+
+    setLocationStatus('detecting');
+    const coords = await getUserLocation(forceLocation === true);
+    setLocation(coords);
+    setLocationStatus(coords ? 'found' : 'unavailable');
 
     try {
       const data = await tutorService.getTutors();
@@ -95,16 +107,31 @@ const Search = () => {
       results = results.filter(t => (t.rating || 0) >= filters.rating);
     }
 
-    // Distance
-    if (location && filters.distance && filters.distance !== 0) {
-      results = results.filter(t => (t.distance || 0) <= filters.distance);
+    // Distance: every tutor stays listed; tutors within the chosen radius are
+    // marked "Near you". A tutor who hasn't shared their location has no
+    // distance and is never marked nearby.
+    const radius = filters.distance || 10;
+    results = results.map((t) => {
+      const distanceKnown =
+        Boolean(location) && t.distance != null && t.latitude != null && t.longitude != null;
+      return {
+        ...t,
+        distanceKnown,
+        locationUnknown: Boolean(location) && !distanceKnown,
+        isNearby: distanceKnown && Number(t.distance) <= radius,
+      };
+    });
+    if (nearbyOnly) {
+      results = results.filter((t) => t.isNearby);
     }
 
     // Price range
-    const [minPrice, maxPrice] = filters.priceRange || [0, 200];
+    // An empty (or zero) max means no upper limit
+    const [minPrice, maxPrice] = filters.priceRange || [0, ''];
+    const hasMax = maxPrice !== '' && Number(maxPrice) > 0;
     results = results.filter(t => {
       const price = parseFloat(t.price) || 0;
-      return price >= minPrice && price <= maxPrice;
+      return price >= (Number(minPrice) || 0) && (!hasMax || price <= Number(maxPrice));
     });
 
     // Availability
@@ -114,16 +141,22 @@ const Search = () => {
       );
     }
 
-    // Sort by rating, then distance
+    // Nearby tutors first (closest first), then everyone else by rating,
+    // then by distance
     results.sort((a, b) => {
+      if (a.isNearby !== b.isNearby) return a.isNearby ? -1 : 1;
+      if (a.isNearby && b.isNearby) return Number(a.distance) - Number(b.distance);
       if ((b.rating || 0) !== (a.rating || 0)) {
         return (b.rating || 0) - (a.rating || 0);
       }
-      return location ? (a.distance || 0) - (b.distance || 0) : 0;
+      if (a.distanceKnown && b.distanceKnown) return Number(a.distance) - Number(b.distance);
+      return a.distanceKnown ? -1 : b.distanceKnown ? 1 : 0;
     });
 
     return results;
-  }, [tutors, filters, location]);
+  }, [tutors, filters, location, nearbyOnly]);
+
+  const nearbyCount = filteredTutors.filter((t) => t.isNearby).length;
 
   // ==================== HANDLERS ====================
   const handleFilterChange = (key, value) => {
@@ -147,7 +180,7 @@ const Search = () => {
       level: '',
       mode: '',
       distance: 10,
-      priceRange: [0, 200],
+      priceRange: [0, ''],
       rating: 0,
       availability: '',
     });
@@ -159,7 +192,7 @@ const Search = () => {
   // Count active filters for mobile badge
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
     if (key === 'query') return false;
-    if (key === 'priceRange') return value[0] !== 0 || value[1] !== 200;
+    if (key === 'priceRange') return value[0] !== 0 || value[1] !== '';
     if (key === 'distance') return value !== 10;
     if (key === 'rating') return value !== 0;
     return value && value !== '';
@@ -174,7 +207,7 @@ const Search = () => {
           <p className="text-gray-600 mt-2">
             {isLoading
               ? 'Loading tutors...'
-              : `${filteredTutors.length} tutor${filteredTutors.length !== 1 ? 's' : ''} found${location ? ' near you' : ''}`
+              : `${filteredTutors.length} tutor${filteredTutors.length !== 1 ? 's' : ''} found${location ? ` · ${nearbyCount} near you` : ''}`
             }
           </p>
         </div>
@@ -230,7 +263,17 @@ const Search = () => {
           </div>
 
           {/* Results */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
+            <StudentLocationPanel
+              status={locationStatus}
+              location={location}
+              nearbyCount={nearbyCount}
+              radius={filters.distance || 10}
+              onRadiusChange={(km) => handleFilterChange('distance', km)}
+              nearbyOnly={nearbyOnly}
+              onNearbyOnlyChange={setNearbyOnly}
+              onRetry={() => fetchTutors(true)}
+            />
             {isLoading ? (
               <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
@@ -243,7 +286,7 @@ const Search = () => {
                 title="Failed to load tutors"
                 description={error}
                 action={
-                  <button onClick={fetchTutors} className="btn-primary">
+                  <button onClick={() => fetchTutors()} className="btn-primary">
                     Try again
                   </button>
                 }

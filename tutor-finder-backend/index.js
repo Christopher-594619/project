@@ -15,6 +15,7 @@ const {tutors}= require("./routes/tutors");
 const {bookings} = require("./routes/bookings")
 const {chats} = require("./routes/chats")
 const {admin} = require("./routes/admin")
+const {payments} = require("./routes/payments")
 
 
 const app = express();
@@ -47,6 +48,7 @@ app.use("/api/tutors", tutors)
 app.use("/api/bookings", bookings)
 app.use("/api/chats", chats);
 app.use("/api/admin", admin);
+app.use("/api/payments", payments);
 
 app.get(/.*/, (req, res) => {
   // Skip API routes (should already be handled above)

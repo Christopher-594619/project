@@ -20,7 +20,7 @@ const updateBookingStatus = async (req, res) => {
             [userId]
         );
 
-        if (user.length < 0) {
+        if (user.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "User not found"
@@ -64,11 +64,29 @@ const updateBookingStatus = async (req, res) => {
         // Permissions
         const isTutor = role === "tutor" && booking.tutor_id === userId;
         const isStudent = role === "student" && booking.student_id === userId;
+        // Admins reach this through PATCH /api/admin/bookings/:id/status.
+        const isAdmin = role === "admin";
 
-        if (!isTutor && !isStudent) {
+        if (!isTutor && !isStudent && !isAdmin) {
             return res.status(403).json({
                 success: false,
                 message: "You are not allowed to update this booking",
+            });
+        }
+
+        // Admins oversee bookings but only ever cancel them
+        if (isAdmin && status !== "cancelled") {
+            return res.status(403).json({
+                success: false,
+                message: "Admins can only cancel bookings",
+            });
+        }
+
+        // A session has to be agreed before it can be marked as done
+        if (status === "completed" && booking.status !== "confirmed") {
+            return res.status(400).json({
+                success: false,
+                message: "Only confirmed bookings can be marked completed",
             });
         }
 

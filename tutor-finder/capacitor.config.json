@@ -1,0 +1,16 @@
+{
+  "appId": "com.tutorfinder.app",
+  "appName": "Tutor Finder",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
+    "CapacitorCookies": {
+      "enabled": true
+    }
+  }
+}

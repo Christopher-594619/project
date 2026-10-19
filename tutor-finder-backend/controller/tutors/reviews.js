@@ -14,7 +14,7 @@ const addReview = async (req, res) => {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
 
-        if (!tutorId || !rating || !comment) {
+        if (!tutorId || !rating || !comment || !String(comment).trim()) {
             return res.status(400).json({
                 success: false,
                 message: "tutorId, rating and comment are required",
@@ -33,6 +33,21 @@ const addReview = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "You cannot review yourself",
+            });
+        }
+
+        // Only a student who has actually had a session with this tutor can
+        // review them, which also stops tutors reviewing each other.
+        const [sessions] = await db.promise().query(
+            `SELECT id FROM bookings
+             WHERE student_id = ? AND tutor_id = ? AND status = 'completed'
+             LIMIT 1`,
+            [studentId, tutorId]
+        );
+        if (sessions.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: "You can review a tutor once they have completed a session with you",
             });
         }
 

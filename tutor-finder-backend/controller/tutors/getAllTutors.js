@@ -58,6 +58,7 @@ const getAllTutors = async (req, res) => {
                 ON tp.user_id = u.id
 
             WHERE tp.is_active = TRUE
+              AND tp.verified = TRUE
 
             ORDER BY
                 ${hasUserLocation ? 'distance ASC,' : ''}

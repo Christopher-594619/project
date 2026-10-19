@@ -14,7 +14,7 @@ const getUsers = async (req, res) => {
         const params = [];
 
         if (search) {
-            where.push("(email LIKE ? OR name LIKE ? OR phone LIKE ?)");
+            where.push("(email LIKE ? OR CONCAT_WS(' ', firstName, lastName) LIKE ? OR phone LIKE ?)");
             params.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
 
@@ -27,7 +27,7 @@ const getUsers = async (req, res) => {
 
         const [rows] = await db.promise().query(
             `
-            SELECT id, email, phone, name, role, is_suspended, suspended_reason, created_at
+            SELECT id, email, phone, CONCAT_WS(' ', firstName, lastName) AS name, role, is_suspended, suspended_reason, created_at
             FROM users
             ${whereClause}
             ORDER BY created_at DESC

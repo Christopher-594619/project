@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../hooks/useNotification';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import {
   FaBell,
   FaComment,
@@ -86,6 +87,7 @@ const IconButton = ({ icon: Icon, badge, onClick, to, label }) => {
 // ============ Main ============
 const Navbar = () => {
   const { user, logout, isLoggedIn } = useAuth();
+  const unreadMessages = useUnreadMessages();
   const { getUnreadCount } = useNotification();
   const navigate = useNavigate();
 
@@ -191,7 +193,12 @@ const Navbar = () => {
                 <>
 
                   {/* Messages */}
-                  <IconButton icon={FaComment} to="/messages" label="Messages" />
+                  <IconButton
+                    icon={FaComment}
+                    to="/messages"
+                    label={unreadMessages ? `Messages, ${unreadMessages} unread` : 'Messages'}
+                    badge={unreadMessages}
+                  />
 
                   {/* Profile */}
                   <div className="relative ml-1" ref={profileRef}>
@@ -374,6 +381,11 @@ const Navbar = () => {
                   >
                     <FaComment className="w-4 h-4 text-gray-400" />
                     Messages
+                    {unreadMessages > 0 && (
+                      <span className="ml-auto min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
                   </Link>
                   <button
                     onClick={handleLogout}

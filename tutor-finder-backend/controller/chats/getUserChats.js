@@ -33,7 +33,14 @@ const getUserChats = async (req, res) => {
                 m.receiver_id  AS msg_receiver_id,
                 m.content      AS msg_content,
                 m.read_at      AS msg_read_at,
-                m.created_at   AS msg_created_at
+                m.created_at   AS msg_created_at,
+
+                (
+                    SELECT COUNT(*) FROM messages um
+                    WHERE um.chat_id = c.id
+                      AND um.receiver_id = ?
+                      AND um.read_at IS NULL
+                ) AS unread_count
 
             FROM chats c
 
@@ -53,7 +60,7 @@ const getUserChats = async (req, res) => {
             ORDER BY
                 COALESCE(m.created_at, c.created_at) DESC
             `,
-            [userId, userId]
+            [userId, userId, userId]
         );
 
         const chats = rows.map((r) => {
@@ -91,6 +98,7 @@ const getUserChats = async (req, res) => {
                 tutorId: r.tutor_id,
                 other,
                 lastMessage,
+                unreadCount: Number(r.unread_count) || 0,
                 updatedAt: r.msg_created_at || r.chat_updated_at,
             };
         });

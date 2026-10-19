@@ -71,6 +71,18 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
     '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
   ];
 
+  // A slot is unavailable if the chosen date is today and its start time has
+  // already passed (the server rejects these too).
+  const isPastSlot = (time) => {
+    if (selectedDate !== format(new Date(), 'yyyy-MM-dd')) return false;
+    const [, h, m, period] = time.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    let hours = parseInt(h, 10) % 12;
+    if (period.toUpperCase() === 'PM') hours += 12;
+    const slot = new Date();
+    slot.setHours(hours, parseInt(m, 10), 0, 0);
+    return slot <= new Date();
+  };
+
   const durations = [
     { value: '30', label: '30 minutes' },
     { value: '60', label: '1 hour' },
@@ -307,7 +319,10 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
                   type="date"
                   min={format(new Date(), 'yyyy-MM-dd')}
                   value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setSelectedTime(''); // the old slot may not exist (or be past) on the new date
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
@@ -325,7 +340,9 @@ const BookingModal = ({ isOpen, onClose, tutor }) => {
                       key={time}
                       type="button"
                       onClick={() => setSelectedTime(time)}
-                      className={`px-3 py-2 text-sm rounded-lg border transition-all ${
+                      disabled={isPastSlot(time)}
+                      title={isPastSlot(time) ? 'This time has already passed' : undefined}
+                      className={`px-3 py-2 text-sm rounded-lg border transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:line-through ${
                         selectedTime === time
                           ? 'border-primary-600 bg-primary-50 text-primary-700'
                           : 'border-gray-200 hover:border-primary-300 text-gray-600'

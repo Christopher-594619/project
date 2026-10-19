@@ -7,6 +7,13 @@ const PLATFORM_FEE_RATE = 0.1; // 10% platform fee, rest goes to the tutor
 
 class PaymentError extends Error {}
 
+// What a booking costs: bookings.price is the tutor's hourly rate at the
+// time of booking and bookings.duration is in minutes.
+function bookingTotal(booking) {
+    const hours = (Number(booking.duration) || 60) / 60;
+    return Math.round(Number(booking.price) * hours * 100) / 100;
+}
+
 function splitAmount(amount) {
     const platformFee = Math.round(amount * PLATFORM_FEE_RATE * 100) / 100;
     const tutorPayout = Math.round((amount - platformFee) * 100) / 100;
@@ -35,7 +42,9 @@ async function initiatePayment({ bookingId, studentId, provider, msisdn }) {
     if (booking.student_id !== studentId) {
         throw new PaymentError("This booking doesn't belong to you.");
     }
-    if (booking.status !== "confirmed") {
+    // A tutor may mark a session completed before the student has paid,
+    // so completed bookings stay payable too.
+    if (booking.status !== "confirmed" && booking.status !== "completed") {
         throw new PaymentError("You can only pay once the tutor has confirmed this booking.");
     }
 
@@ -47,7 +56,10 @@ async function initiatePayment({ bookingId, studentId, provider, msisdn }) {
         throw new PaymentError("This booking has already been paid for.");
     }
 
-    const amount = Number(booking.rate);
+    const amount = bookingTotal(booking);
+    if (!(amount > 0)) {
+        throw new PaymentError("This booking has no price set, so it can't be paid for.");
+    }
     const { platformFee, tutorPayout } = splitAmount(amount);
     const transactionId = uuidv4();
 
@@ -103,7 +115,9 @@ async function getFullTransaction(transactionId) {
     const [rows] = await db.promise().query(
         `SELECT t.*, r.receipt_number, r.issued_at,
                 s.email AS student_email, tu.email AS tutor_email,
-                b.subject, b.scheduled_at
+                CONCAT_WS(' ', s.firstName, s.lastName) AS student_name,
+                CONCAT_WS(' ', tu.firstName, tu.lastName) AS tutor_name,
+                b.subject, b.date, b.time, b.duration, b.price
          FROM transactions t
          JOIN users s ON s.id = t.student_id
          JOIN users tu ON tu.id = t.tutor_id
@@ -112,7 +126,16 @@ async function getFullTransaction(transactionId) {
          WHERE t.id = ?`,
         [transactionId]
     );
-    return rows[0];
+    const row = rows[0];
+    if (!row) return row;
+
+    // The frontend's receipt view expects the receipt fields nested under
+    // `receipt`, separate from the transaction fields themselves.
+    const { receipt_number, issued_at, ...transaction } = row;
+    return {
+        ...transaction,
+        receipt: receipt_number ? { receipt_number, issued_at } : null,
+    };
 }
 
-module.exports = { initiatePayment, retryPayment, getFullTransaction, PaymentError };
+module.exports = { initiatePayment, retryPayment, getFullTransaction, bookingTotal, PaymentError };

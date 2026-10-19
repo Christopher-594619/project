@@ -27,7 +27,7 @@ const SearchFilters = ({ filters, onFilterChange, onClear }) => {
   };
 
   const activeFiltersCount = Object.entries(filters).filter(([key, value]) => {
-    if (key === 'priceRange') return value[0] !== 0 || value[1] !== 200;
+    if (key === 'priceRange') return value[0] !== 0 || value[1] !== '';
     if (key === 'distance') return value !== 10;
     if (key === 'rating') return value !== 0;
     return value && value !== '';
@@ -159,7 +159,8 @@ const SearchFilters = ({ filters, onFilterChange, onClear }) => {
               <input
                 type="number"
                 value={filters.priceRange[1]}
-                onChange={(e) => onFilterChange('priceRange', [filters.priceRange[0], Number(e.target.value)])}
+                onChange={(e) => onFilterChange('priceRange', [filters.priceRange[0], e.target.value === '' ? '' : Number(e.target.value)])}
+                placeholder="Any"
                 className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 min="0"
               />

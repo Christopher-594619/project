@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useUnreadMessages } from '../../hooks/useUnreadMessages';
 import {
   FaHome,
   FaCalendarAlt,
@@ -21,6 +22,7 @@ import GetLocationButton from '../../pages/TutorDashboard/components/GetLocation
 
 const DashboardSidebar = ({ userType }) => {
   const { user, logout } = useAuth();
+  const unreadMessages = useUnreadMessages();
     const location = useLocation();
 
     const API_URL = import.meta.env.VITE_ENDPOINT_URL;
@@ -65,7 +67,7 @@ const DashboardSidebar = ({ userType }) => {
     links = tutorLinks;
   }
   else if(userType === "admin"){
-    links = "adminLinks";sssss
+    links = adminLinks;
   }
   else{
     links = studentLinks;
@@ -131,6 +133,16 @@ const DashboardSidebar = ({ userType }) => {
                 <span className="truncate">
                   {link.label}
                 </span>
+
+                {/* Unread message count on the Messages link */}
+                {link.to === '/messages' && unreadMessages > 0 && (
+                  <span
+                    className="ml-auto min-w-[20px] h-5 px-1.5 flex-shrink-0 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+                    aria-label={`${unreadMessages} unread`}
+                  >
+                    {unreadMessages > 9 ? '9+' : unreadMessages}
+                  </span>
+                )}
 
                 {isActive && (
                   <div className="ml-auto w-1.5 min-w-1.5 h-8 flex-shrink-0 bg-primary-600 rounded-full" />

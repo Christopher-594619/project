@@ -14,7 +14,7 @@ const getTutors = async (req, res) => {
         const params = [];
 
         if (search) {
-            where.push("(u.email LIKE ? OR u.name LIKE ? OR u.phone LIKE ?)");
+            where.push("(u.email LIKE ? OR CONCAT_WS(' ', u.firstName, u.lastName) LIKE ? OR u.phone LIKE ?)");
             params.push(`%${search}%`, `%${search}%`, `%${search}%`);
         }
 
@@ -38,10 +38,10 @@ const getTutors = async (req, res) => {
             `
             SELECT
                 tp.*,
-                u.name AS tutor_name,
+                CONCAT_WS(' ', u.firstName, u.lastName) AS tutor_name,
                 u.email AS tutor_email,
                 u.phone AS tutor_phone,
-                u.name AS tutor_name,
+                CONCAT_WS(' ', u.firstName, u.lastName) AS tutor_name,
                 u.is_suspended,
                 u.suspended_reason,
                 u.created_at AS user_created_at

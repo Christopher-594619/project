@@ -92,6 +92,11 @@ const TutorDashboard = () => {
     )
     .sort((a, b) => bookingDateTime(a) - bookingDateTime(b));
 
+  // Pending requests and confirmed sessions as one list, soonest first
+  const needsAttention = [...pending, ...upcoming].sort(
+    (a, b) => bookingDateTime(a) - bookingDateTime(b)
+  );
+
   const completed = bookings.filter((b) => b.status === 'completed');
 
   const uniqueStudents = new Set(bookings.map((b) => b.studentId)).size;
@@ -243,7 +248,7 @@ const TutorDashboard = () => {
 
             {pending.length > 0 || upcoming.length > 0 ? (
               <div className="space-y-3">
-                {[...pending, ...upcoming].slice(0, 5).map((b) => (
+                {needsAttention.slice(0, 5).map((b) => (
                   <div
                     key={b.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"

@@ -13,7 +13,7 @@ const getBookings = async (req, res) => {
         const params = [];
 
         if (search) {
-            where.push("(s.name LIKE ? OR s.email LIKE ? OR t.name LIKE ? OR t.email LIKE ? OR b.subject LIKE ?)");
+            where.push("(CONCAT_WS(' ', s.firstName, s.lastName) LIKE ? OR s.email LIKE ? OR CONCAT_WS(' ', t.firstName, t.lastName) LIKE ? OR t.email LIKE ? OR b.subject LIKE ?)");
             params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
         }
 
@@ -39,8 +39,8 @@ const getBookings = async (req, res) => {
             `
             SELECT
                 b.*,
-                s.name AS student_name, s.email AS student_email,
-                t.name AS tutor_name, t.email AS tutor_email
+                CONCAT_WS(' ', s.firstName, s.lastName) AS student_name, s.email AS student_email,
+                CONCAT_WS(' ', t.firstName, t.lastName) AS tutor_name, t.email AS tutor_email
             FROM bookings b
             JOIN users s ON s.id = b.student_id
             JOIN users t ON t.id = b.tutor_id

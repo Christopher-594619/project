@@ -7,7 +7,7 @@ const getAdmins = async (req, res) => {
     try {
         const [rows] = await db.promise().query(
             `
-            SELECT id, email, phone, name, created_at
+            SELECT id, email, phone, CONCAT_WS(' ', firstName, lastName) AS name, created_at
             FROM users
             WHERE role = 'admin'
             ORDER BY created_at ASC
@@ -45,6 +45,9 @@ const createAdmin = async (req, res) => {
         email = email.trim().toLowerCase();
         phone = phone.trim();
         name = name ? name.trim() : null;
+        // users stores firstName/lastName, not a single name column.
+        const [firstName = null, ...rest] = name ? name.split(/\s+/) : [];
+        const lastName = rest.length ? rest.join(" ") : null;
 
         if (!/^\S+@\S+\.\S+$/.test(email)) {
             return res.status(400).json({
@@ -79,14 +82,14 @@ const createAdmin = async (req, res) => {
 
         await db.promise().query(
             `
-            INSERT INTO users (id, email, phone, name, password, role)
-            VALUES (?, ?, ?, ?, ?, 'admin')
+            INSERT INTO users (id, email, phone, firstName, lastName, password, role)
+            VALUES (?, ?, ?, ?, ?, ?, 'admin')
             `,
-            [id, email, phone, name || null, hashedPassword]
+            [id, email, phone, firstName, lastName, hashedPassword]
         );
 
         const [rows] = await db.promise().query(
-            "SELECT id, email, phone, name, created_at FROM users WHERE id = ?",
+            "SELECT id, email, phone, CONCAT_WS(' ', firstName, lastName) AS name, created_at FROM users WHERE id = ?",
             [id]
         );
 

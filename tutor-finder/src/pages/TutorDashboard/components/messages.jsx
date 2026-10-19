@@ -6,6 +6,7 @@ import { FaArrowLeft, FaPaperPlane } from 'react-icons/fa';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
 import EmptyState from '../../../components/common/EmptyState';
 import toast from 'react-hot-toast';
+import { refreshUnreadMessages } from '../../../hooks/useUnreadMessages';
 
 const API_URL = import.meta.env.VITE_ENDPOINT_URL;
 const POLL_INTERVAL = 2000; // 2s long-poll cycle
@@ -49,6 +50,8 @@ const Messages = () => {
 
         const msgs = msgData.messages || [];
         setMessages(msgs);
+        // Opening the chat marks its messages read; update the badges now
+        refreshUnreadMessages();
 
         // 👇 ADD THIS
         if (msgData.chat) setChatInfo(msgData.chat);
@@ -94,6 +97,8 @@ const Messages = () => {
           return [...prev, ...fresh];
         });
         lastTimestampRef.current = incoming[incoming.length - 1].createdAt;
+        // Messages arriving in the open chat are already read
+        refreshUnreadMessages();
       }
     } catch (err) {
       // silent — network hiccup, try again next tick

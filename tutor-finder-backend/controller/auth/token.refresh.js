@@ -1,9 +1,10 @@
 const jwt = require("jsonwebtoken");
+const { db } = require("../../modal/db");
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET;
 const REFRESH_SECRET = process.env.REFRESH_SECRET;
 
-const refreshToken = (req, res) => {
+const refreshToken = async (req, res) => {
     try {
 
         // 1. get refresh token from HttpOnly cookie
@@ -19,17 +20,38 @@ const refreshToken = (req, res) => {
         // 2. verify refresh token
         const decoded = jwt.verify(token, REFRESH_SECRET);
 
-        // 3. create new access token
+        // 3. re-read the account, so a suspension (or a role change such as
+        // becoming a tutor) takes effect at the next refresh instead of
+        // lasting as long as the refresh token
+        const [rows] = await db.promise().query(
+            "SELECT role, is_suspended FROM users WHERE id = ? LIMIT 1",
+            [decoded.userId]
+        );
+        const user = rows[0];
+
+        if (!user || user.is_suspended) {
+            res.clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict"
+            });
+            return res.status(403).json({
+                success: false,
+                message: user ? "Your account has been suspended" : "Account not found"
+            });
+        }
+
+        // 4. create new access token
         const newAccessToken = jwt.sign(
             {
                 userId: decoded.userId,
-                role: decoded.role,
+                role: user.role,
             },
             ACCESS_SECRET,
             { expiresIn: "15m" }
         );
 
-        // 4. send new access token
+        // 5. send new access token
         return res.status(200).json({
             success: true,
             accessToken: newAccessToken

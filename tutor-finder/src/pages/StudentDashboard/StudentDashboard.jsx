@@ -10,10 +10,14 @@ import {
   FaBook,
   FaArrowUp,
   FaCog,
+  FaMoneyBillWave,
+  FaReceipt,
 } from 'react-icons/fa';
 import EmptyState from '../../components/common/EmptyState';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import StatsCard from '../../components/dashboard/StatsCard';
+import PaymentModal from '../../components/payments/PaymentModal';
+import ReceiptModal from '../../components/payments/ReceiptModal';
 import { formatters } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
@@ -27,6 +31,8 @@ const StudentDashboard = () => {
   const [bookingError, setBookingError] = useState(null);
   const [reloadBookings, setReloadBookings] = useState(0);
   const [openingChatId, setOpeningChatId] = useState(null);
+  const [payingBooking, setPayingBooking] = useState(null);
+  const [viewingReceiptId, setViewingReceiptId] = useState(null);
 
   // Convert booking -> Date object combining date + time
   function bookingDateTime(booking) {
@@ -97,13 +103,17 @@ const StudentDashboard = () => {
     };
   }, [user, accessToken, authLoading, reloadBookings]);
 
-  const now = new Date();
+  // Compare against the start of today rather than this exact moment, so a
+  // session stays listed (and payable) for the whole of its day instead of
+  // vanishing as soon as its start time passes.
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
   const upcoming = bookings
     .filter(
       (b) =>
         (b.status === 'confirmed' || b.status === 'pending') &&
-        bookingDateTime(b) >= now
+        bookingDateTime(b) >= startOfToday
     )
     .sort((a, b) => bookingDateTime(a) - bookingDateTime(b));
 
@@ -143,8 +153,66 @@ const StudentDashboard = () => {
       }
   };
 
+  // Mark the booking paid locally so the button switches to "View receipt"
+  // without reloading the whole list.
+  const handlePaymentSuccess = (transaction) => {
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.id === transaction.booking_id
+          ? {
+              ...b,
+              isPaid: true,
+              transactionId: transaction.id,
+              receiptNumber: transaction.receipt?.receipt_number,
+            }
+          : b
+      )
+    );
+  };
+
+  // "Pay" once the tutor has confirmed, "View receipt" once paid.
+  const renderPaymentAction = (b) => {
+    if (b.isPaid) {
+      return (
+        <button
+          onClick={() => setViewingReceiptId(b.transactionId)}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+        >
+          <FaReceipt className="w-3 h-3" />
+          Paid · View receipt
+        </button>
+      );
+    }
+    if (b.status === 'confirmed' || b.status === 'completed') {
+      return (
+        <button
+          onClick={() => setPayingBooking(b)}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+        >
+          <FaMoneyBillWave className="w-3 h-3" />
+          Pay {formatters.currency(b.totalAmount)}
+        </button>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="space-y-8">
+      {payingBooking && (
+        <PaymentModal
+          booking={payingBooking}
+          onClose={() => setPayingBooking(null)}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
+      {viewingReceiptId && (
+        <ReceiptModal
+          transactionId={viewingReceiptId}
+          onClose={() => setViewingReceiptId(null)}
+        />
+      )}
+
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {user?.firstName || 'Student'}!
@@ -310,7 +378,7 @@ const StudentDashboard = () => {
                         {b.time} · {b.duration} min
                       </p>
 
-                      <div className="flex items-center justify-end gap-2 mt-1.5">
+                      <div className="flex flex-wrap items-center justify-end gap-2 mt-1.5">
                         <span
                           className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
                             b.status === 'confirmed'
@@ -335,6 +403,8 @@ const StudentDashboard = () => {
                             Message
                           </button>
                         )}
+
+                        {renderPaymentAction(b)}
                       </div>
                     </div>
                   </div>
@@ -386,12 +456,15 @@ const StudentDashboard = () => {
                       <p className="text-xs text-gray-400">
                         {b.time} · {b.duration} min
                       </p>
-                      <Link
-                        to={`/tutor/${b.tutorId}`}
-                        className="inline-block mt-1 text-xs text-primary-600 hover:text-primary-700"
-                      >
-                        Leave a review
-                      </Link>
+                      <div className="flex flex-wrap items-center justify-end gap-2 mt-1.5">
+                        {renderPaymentAction(b)}
+                        <Link
+                          to={`/tutor/${b.tutorId}`}
+                          className="text-xs text-primary-600 hover:text-primary-700"
+                        >
+                          Leave a review
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

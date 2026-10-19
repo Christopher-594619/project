@@ -9,9 +9,12 @@ import {
   FaChevronDown,
   FaCheckCircle,
   FaTimesCircle,
+  FaReceipt,
+  FaMoneyBillWave,
 } from 'react-icons/fa';
 import EmptyState from '../../../components/common/EmptyState';
 import LoadingSkeleton from '../../../components/common/LoadingSkeleton';
+import ReceiptModal from '../../../components/payments/ReceiptModal';
 import { formatters } from '../../../utils/formatters';
 import toast from 'react-hot-toast';
 
@@ -35,6 +38,7 @@ const TutorBookings = () => {
   const [updatingId, setUpdatingId] = useState(null);
   const [filter, setFilter] = useState('all');
   const [openingChatId, setOpeningChatId] = useState(null);
+  const [viewingReceiptId, setViewingReceiptId] = useState(null);
 
   const convertTo24h = (timeStr) => {
     if (!timeStr) return '00:00';
@@ -151,9 +155,19 @@ const TutorBookings = () => {
         }
     };
 
+  // Upcoming sessions first (soonest at the top), then past sessions
+  // (most recent first)
+  const now = new Date();
   const filtered = bookings
     .filter((b) => (filter === 'all' ? true : b.status === filter))
-    .sort((a, b) => bookingDateTime(b) - bookingDateTime(a));
+    .sort((a, b) => {
+      const ta = bookingDateTime(a);
+      const tb = bookingDateTime(b);
+      const aUpcoming = ta >= now;
+      const bUpcoming = tb >= now;
+      if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+      return aUpcoming ? ta - tb : tb - ta;
+    });
 
   const counts = Object.keys(STATUS_CONFIG).reduce((acc, key) => {
     acc[key] = key === 'all'
@@ -172,6 +186,12 @@ const TutorBookings = () => {
 
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      {viewingReceiptId && (
+        <ReceiptModal
+          transactionId={viewingReceiptId}
+          onClose={() => setViewingReceiptId(null)}
+        />
+      )}
 
       {/* Header */}
       <div>
@@ -307,6 +327,23 @@ const TutorBookings = () => {
                     <FaClock className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                     {b.time} · {b.duration} min
                   </div>
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <FaMoneyBillWave className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    {formatters.currency(b.totalAmount)}
+                    {b.isPaid ? (
+                      <button
+                        onClick={() => setViewingReceiptId(b.transactionId)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold rounded-md bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                      >
+                        <FaReceipt className="w-3 h-3" />
+                        Paid · View receipt
+                      </button>
+                    ) : (b.status === 'confirmed' || b.status === 'completed') ? (
+                      <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-yellow-100 text-yellow-700">
+                        Awaiting payment
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 {/* Notes */}
@@ -361,21 +398,27 @@ const TutorBookings = () => {
                           className="absolute bottom-full mb-2 right-0 w-52 bg-white rounded-xl shadow-hard border border-gray-100 py-2 z-20"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <button
-                            onClick={() => handleUpdateStatus(b.id, 'completed')}
-                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
-                          >
-                            <FaCheckCircle className="w-4 h-4 text-blue-500" />
-                            Mark completed
-                          </button>
+                          {/* A pending booking can only be confirmed; only a
+                              confirmed one can be marked completed. */}
+                          {b.status === 'confirmed' && (
+                            <button
+                              onClick={() => handleUpdateStatus(b.id, 'completed')}
+                              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                            >
+                              <FaCheckCircle className="w-4 h-4 text-blue-500" />
+                              Mark completed
+                            </button>
+                          )}
 
-                          <button
-                            onClick={() => handleUpdateStatus(b.id, 'confirmed')}
-                            className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
-                          >
-                            <FaCheckCircle className="w-4 h-4 text-blue-500" />
-                             Mark Confirmed
-                          </button>
+                          {b.status === 'pending' && (
+                            <button
+                              onClick={() => handleUpdateStatus(b.id, 'confirmed')}
+                              className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 transition-colors"
+                            >
+                              <FaCheckCircle className="w-4 h-4 text-blue-500" />
+                              Mark Confirmed
+                            </button>
+                          )}
 
                           <button
                             onClick={() => handleUpdateStatus(b.id, 'cancelled')}

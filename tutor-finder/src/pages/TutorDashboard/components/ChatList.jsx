@@ -141,14 +141,17 @@ const ChatList = () => {
                     <p className="font-semibold text-gray-900 truncate">
                       {other?.name || 'Chat'}
                     </p>
-                    <span className="text-xs text-gray-400 flex-shrink-0">
+                    <span className={`text-xs flex-shrink-0 ${chat.unreadCount > 0 ? 'text-primary-600 font-semibold' : 'text-gray-400'}`}>
                       {formatRelative(chat.updatedAt)}
                     </span>
                   </div>
 
+                  <div className="flex items-center gap-3 mt-0.5">
                   <p
-                    className={`text-sm truncate mt-0.5 ${
-                      lm?.isMine
+                    className={`text-sm truncate flex-1 min-w-0 ${
+                      chat.unreadCount > 0
+                        ? 'text-gray-900 font-semibold'
+                        : lm?.isMine
                         ? 'text-gray-500'
                         : 'text-gray-600'
                     }`}
@@ -166,6 +169,15 @@ const ChatList = () => {
                       </span>
                     )}
                   </p>
+                  {chat.unreadCount > 0 && (
+                    <span
+                      className="min-w-[22px] h-[22px] px-1.5 flex-shrink-0 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+                      aria-label={`${chat.unreadCount} unread`}
+                    >
+                      {chat.unreadCount > 9 ? '9+' : chat.unreadCount}
+                    </span>
+                  )}
+                  </div>
                 </div>
               </button>
             );

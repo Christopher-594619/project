@@ -68,10 +68,10 @@ const sendEmail = async (req, res) => {
     });
 
     const mailOptions = {
-      from: `"RapOnBeats" <${process.env.EMAIL_ADDRESS}>`,
+      from: `"Tutor Finder" <${process.env.EMAIL_ADDRESS}>`,
       to: email,
-      subject: "RapOnBeats - Email Verification Code",
-      text: `Your RapOnBeats verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not request this code, please ignore this message.\n\n---\nRapOnBeats — Discover African Music.`,
+      subject: "Tutor Finder - Email Verification Code",
+      text: `Your Tutor Finder verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you did not request this code, please ignore this message.\n\n---\nRapOnBeats — Discover African Music.`,
       html: `
       <!DOCTYPE html>
       <!DOCTYPE html>

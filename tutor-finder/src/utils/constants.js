@@ -43,6 +43,7 @@ export const PRICE_RANGES = [
   { min: 75, max: 100, label: 'K75 - K100' },
   { min: 100, max: 150, label: 'K100 - K150' },
   { min: 150, max: 200, label: 'K150 - K200' },
+  { min: 200, max: '', label: 'K200+' },
 ];
 
 export const DISTANCE_OPTIONS = [

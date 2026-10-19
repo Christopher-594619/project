@@ -74,15 +74,43 @@ const createBooking = async (req, res) => {
         }
         const newEnd = newStart + durationInt;
 
+        // ===== Reject sessions in the past =====
+        const dateMatch = String(date).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (!dateMatch) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid date format. Use YYYY-MM-DD.",
+            });
+        }
+        const sessionStart = new Date(
+            Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]),
+            Math.floor(newStart / 60), newStart % 60
+        );
+        if (sessionStart <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                message: "That time has already passed. Please choose a future date and time.",
+            });
+        }
+
         // ===== Confirm tutor exists =====
+        // price is read here so the booking uses the tutor's real hourly rate,
+        // not whatever the browser sends.
         const [tutorRows] = await db.promise().query(
-            "SELECT user_id FROM tutor_profiles WHERE user_id = ? AND is_active = TRUE",
+            "SELECT user_id, price, verified FROM tutor_profiles WHERE user_id = ? AND is_active = TRUE",
             [tutorId]
         );
         if (tutorRows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "Tutor not found",
+            });
+        }
+        // Only tutors verified by an admin can take bookings
+        if (!tutorRows[0].verified) {
+            return res.status(403).json({
+                success: false,
+                message: "This tutor has not been verified yet, so they can't take bookings.",
             });
         }
 
@@ -123,7 +151,9 @@ const createBooking = async (req, res) => {
         }
 
         // ===== Insert =====
-        const totalPrice = price != null ? parseFloat(price) : 0;
+        // The tutor's current hourly rate, snapshotted onto the booking.
+        // A price in the request body is ignored so it can't be tampered with.
+        const totalPrice = parseFloat(tutorRows[0].price) || 0;
 
         await db.promise().query(
             `

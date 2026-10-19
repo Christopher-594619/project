@@ -2,6 +2,10 @@ const corsOptions = {
     origin: [
         "http://localhost:3000",
         "http://localhost:5173",
+        // Android app (Capacitor) origins
+        "https://localhost",
+        "http://localhost",
+        "capacitor://localhost",
         "http://localhost:5000",
         "https://heritage-privatize-pesky.ngrok-free.dev"
     ],

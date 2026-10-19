@@ -20,7 +20,7 @@ const searchTutors = async (req, res) => {
         const distanceSelect = hasUserLocation
             ? `
                 (
-                    3959 * ACOS(
+                    6371 * ACOS(
                         LEAST(1, GREATEST(-1,
                             COS(RADIANS(?)) *
                             COS(RADIANS(tp.latitude)) *
@@ -36,7 +36,7 @@ const searchTutors = async (req, res) => {
         let sql = `
             SELECT
                 tp.*,
-                u.name AS tutor_name,
+                CONCAT_WS(' ', u.firstName, u.lastName) AS tutor_name,
                 u.email AS tutor_email,
                 u.phone AS tutor_phone,
                 u.firstName As tutor_first_name,
@@ -45,6 +45,7 @@ const searchTutors = async (req, res) => {
             FROM tutor_profiles tp
             INNER JOIN users u ON tp.user_id = u.id
             WHERE tp.is_active = TRUE
+              AND tp.verified = TRUE
         `;
 
         const params = [];
@@ -55,7 +56,7 @@ const searchTutors = async (req, res) => {
         // ===== Filters =====
         if (q) {
             sql += ` AND (
-                u.name LIKE ? OR
+                CONCAT_WS(' ', u.firstName, u.lastName) LIKE ? OR
                 tp.bio LIKE ? OR
                 tp.location LIKE ? OR
                 JSON_SEARCH(tp.subjects, 'one', ?) IS NOT NULL OR

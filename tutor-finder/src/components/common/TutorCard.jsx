@@ -95,6 +95,14 @@ const TutorCard = ({ tutor }) => {
           </div>
         )}
 
+        {/* Near you pill (set by the Find Tutors page when the student's location is known) */}
+        {tutor.isNearby && (
+          <div className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary-600/95 backdrop-blur-sm rounded-full shadow">
+            <FaMapMarkerAlt className="w-3 h-3 text-white" />
+            <span className="text-xs font-semibold text-white">Near you</span>
+          </div>
+        )}
+
         {/* Available today pill */}
         {availableToday && (
           <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-500/95 backdrop-blur-sm rounded-full">
@@ -129,7 +137,24 @@ const TutorCard = ({ tutor }) => {
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
           <FaMapMarkerAlt className="w-3 h-3 text-primary-500 flex-shrink-0" />
           <span className="truncate">{tutor.location || 'Online'}</span>
-          {tutor.distance > 0 && (
+          {tutor.isNearby ? (
+            <>
+              <span className="w-px h-3.5 bg-gray-200" />
+              <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                Near you · {formatters.distance(Number(tutor.distance))}
+              </span>
+            </>
+          ) : tutor.distanceKnown ? (
+            <>
+              <span className="w-px h-3.5 bg-gray-200" />
+              <span className="text-xs whitespace-nowrap">{formatters.distance(Number(tutor.distance))} away</span>
+            </>
+          ) : tutor.locationUnknown ? (
+            <>
+              <span className="w-px h-3.5 bg-gray-200" />
+              <span className="text-xs text-gray-400 whitespace-nowrap">Distance unknown</span>
+            </>
+          ) : tutor.distance > 0 && (
             <>
               <span className="w-px h-3.5 bg-gray-200" />
               <span className="text-xs">{formatters.distance(tutor.distance)}</span>
