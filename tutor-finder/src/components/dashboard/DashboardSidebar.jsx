@@ -16,11 +16,14 @@ import {
   FaArrowUp,
   FaUserGraduate,
   FaChalkboardTeacher,
-  FaUserShield
+  FaUserShield,
+  FaTimes
 } from 'react-icons/fa';
 import GetLocationButton from '../../pages/TutorDashboard/components/GetLocationButton';
 
-const DashboardSidebar = ({ userType }) => {
+// mobile: rendered inside the slide-out menu on phones (DashboardLayout);
+// onNavigate closes that menu after a link is tapped.
+const DashboardSidebar = ({ userType, mobile = false, onNavigate }) => {
   const { user, logout } = useAuth();
   const unreadMessages = useUnreadMessages();
     const location = useLocation();
@@ -74,8 +77,26 @@ const DashboardSidebar = ({ userType }) => {
   }
 
   return (
-    <aside className="w-64 min-w-64 flex-shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto overflow-x-hidden hidden md:block">
+    <aside
+      className={
+        mobile
+          ? 'w-full h-full bg-white overflow-y-auto overflow-x-hidden'
+          : 'w-64 min-w-64 flex-shrink-0 bg-white border-r border-gray-200 h-screen sticky top-0 overflow-y-auto overflow-x-hidden hidden md:block'
+      }
+    >
       <div className="p-6 min-w-0">
+
+        {mobile && (
+          <div className="flex justify-end -mt-2 mb-2">
+            <button
+              onClick={onNavigate}
+              className="p-2 -mr-2 text-gray-500 hover:text-gray-900"
+              aria-label="Close menu"
+            >
+              <FaTimes className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         {/* User */}
         <div className="flex items-center gap-3 mb-8 min-w-0">
@@ -111,6 +132,7 @@ const DashboardSidebar = ({ userType }) => {
               <Link
                 key={link.to}
                 to={link.to}
+                onClick={onNavigate}
                 className={`
                   flex items-center gap-3 px-4 py-2.5
                   w-full min-w-0
@@ -157,7 +179,7 @@ const DashboardSidebar = ({ userType }) => {
           <GetLocationButton />
 
           <button
-            onClick={logout}
+            onClick={() => { onNavigate?.(); logout(); }}
             className="flex items-center gap-3 px-4 py-2.5 w-full min-w-0 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all duration-200"
           >
             <FaSignOutAlt className="w-4 h-4 flex-shrink-0" />
