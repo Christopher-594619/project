@@ -59,20 +59,20 @@ const searchTutors = async (req, res) => {
                 CONCAT_WS(' ', u.firstName, u.lastName) LIKE ? OR
                 tp.bio LIKE ? OR
                 tp.location LIKE ? OR
-                JSON_SEARCH(tp.subjects, 'one', ?) IS NOT NULL OR
-                JSON_SEARCH(tp.skills, 'one', ?) IS NOT NULL
+                JSON_SEARCH(LOWER(tp.subjects), 'one', LOWER(?)) IS NOT NULL OR
+                JSON_SEARCH(LOWER(tp.skills), 'one', LOWER(?)) IS NOT NULL
             )`;
             const like = `%${q}%`;
             params.push(like, like, like, like, like);
         }
 
         if (subject) {
-            sql += ` AND JSON_SEARCH(tp.subjects, 'one', ?) IS NOT NULL`;
+            sql += ` AND JSON_SEARCH(LOWER(tp.subjects), 'one', LOWER(?)) IS NOT NULL`;
             params.push(subject);
         }
 
         if (level) {
-            sql += ` AND JSON_SEARCH(tp.levels, 'one', ?) IS NOT NULL`;
+            sql += ` AND JSON_SEARCH(LOWER(tp.levels), 'one', LOWER(?)) IS NOT NULL`;
             params.push(level);
         }
 
@@ -97,7 +97,7 @@ const searchTutors = async (req, res) => {
         }
 
         if (availability) {
-            sql += ` AND JSON_SEARCH(tp.availability, 'one', ?) IS NOT NULL`;
+            sql += ` AND JSON_SEARCH(LOWER(tp.availability), 'one', LOWER(?)) IS NOT NULL`;
             params.push(availability);
         }
 
