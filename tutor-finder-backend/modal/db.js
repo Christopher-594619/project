@@ -16,6 +16,16 @@ const dbConfig = {
     keepAliveInitialDelay: 0
 };
 
+// Online MySQL hosts (e.g. Aiven) require an encrypted connection.
+// Off unless DB_SSL=true, so the local XAMPP setup is unchanged.
+// DB_CA_CERT may hold the provider's CA certificate (newlines as \n) to
+// verify the server; without it the connection is encrypted but unverified.
+if (process.env.DB_SSL === "true") {
+    dbConfig.ssl = process.env.DB_CA_CERT
+        ? { ca: process.env.DB_CA_CERT.replace(/\\n/g, "\n"), rejectUnauthorized: true }
+        : { rejectUnauthorized: false };
+}
+
 const db = mysql2.createPool({
     ...dbConfig
 });

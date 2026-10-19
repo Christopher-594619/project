@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "build:android": "vite build --mode android && cap sync android",
+    "build:android": "node scripts/set-android-api.cjs && vite build --mode android && cap sync android",
     "android:open": "cap open android"
   },
   "dependencies": {

@@ -16,6 +16,7 @@ const {bookings} = require("./routes/bookings")
 const {chats} = require("./routes/chats")
 const {admin} = require("./routes/admin")
 const {payments} = require("./routes/payments")
+const {syncToDb, backupAfterUploads, serveFromDb} = require("./controller/common/photoStore")
 
 
 const app = express();
@@ -25,7 +26,9 @@ app.use(cors(corsOptions))
 app.use(cookieParser());
 app.use(express.urlencoded({extended: true}))
 app.use(express.json());
+app.use(backupAfterUploads); // copy newly uploaded photos into the database
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', serveFromDb); // photo not on disk (e.g. after a host restart): serve it from the database
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 app.use("/css", express.static(path.join(__dirname, "public/css")));
@@ -69,4 +72,5 @@ app.get(/.*/, (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, ()=>{
     console.log("***Server running***");
+    syncToDb(); // back up any photos already on disk
 });
