@@ -230,18 +230,29 @@ const Search = () => {
 
         <div className="flex gap-8">
           {/* Filters sidebar */}
+          {/* On phones this is a slide-out panel above the navbar (z-[60]);
+              the dimmed overlay comes first so the panel sits on top of it
+              and stays tappable. */}
           <div className={`
-            fixed inset-0 z-40 lg:relative lg:inset-auto
+            fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto
             ${showMobileFilters ? 'translate-x-0' : '-translate-x-full'}
             lg:translate-x-0 transition-transform duration-300
           `}>
-            <div className="bg-white lg:bg-transparent w-80 lg:w-72 h-full overflow-y-auto p-6 lg:p-0">
-              <div className="lg:sticky lg:top-8">
+            {/* Overlay: tap outside the panel to close */}
+            {showMobileFilters && (
+              <div
+                className="fixed inset-0 bg-black/30 lg:hidden"
+                onClick={() => setShowMobileFilters(false)}
+              />
+            )}
+            <div className="relative bg-white lg:bg-transparent w-80 max-w-[85vw] lg:w-72 lg:max-w-none h-full overflow-y-auto p-6 lg:p-0 flex flex-col lg:block">
+              <div className="lg:sticky lg:top-8 flex-1">
                 <div className="flex items-center justify-between lg:hidden mb-4">
                   <h2 className="text-lg font-semibold">Filters</h2>
                   <button
                     onClick={() => setShowMobileFilters(false)}
                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    aria-label="Close filters"
                   >
                     ✕
                   </button>
@@ -252,14 +263,14 @@ const Search = () => {
                   onClear={clearFilters}
                 />
               </div>
-            </div>
-            {/* Overlay */}
-            {showMobileFilters && (
-              <div
-                className="fixed inset-0 bg-black/20 backdrop-blur-sm lg:hidden"
+              {/* Phones: apply and close */}
+              <button
                 onClick={() => setShowMobileFilters(false)}
-              />
-            )}
+                className="lg:hidden btn-primary w-full mt-6 py-3 sticky bottom-0"
+              >
+                Show {filteredTutors.length} tutor{filteredTutors.length !== 1 ? 's' : ''}
+              </button>
+            </div>
           </div>
 
           {/* Results */}
