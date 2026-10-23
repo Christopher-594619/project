@@ -1,0 +1,30 @@
+{
+  "label": "after-fix-run2",
+  "api": "http://localhost:5092",
+  "simultaneousRequests": 10,
+  "at": "2026-10-23T06:13:03.544Z",
+  "booking": {
+    "description": "10 simultaneous requests for the same tutor, date and time",
+    "expected": "exactly 1 booking created, the rest rejected as a clash",
+    "responses": {
+      "201 Booking created successfully": 1,
+      "409 This tutor already has a session that clashes with your selected time. Please pick a slot at least 1 hour apart.": 9
+    },
+    "bookingsInDatabase": 1,
+    "passed": true
+  },
+  "payment": {
+    "description": "10 simultaneous payment requests for one confirmed booking",
+    "expected": "at most 1 completed transaction and at most 1 receipt",
+    "responses": {
+      "402 failed": 1,
+      "400 A payment for this booking is already in progress. Please wait for it to finish.": 9
+    },
+    "transactionsInDatabase": {
+      "failed": 1
+    },
+    "receiptsInDatabase": 0,
+    "passed": true
+  },
+  "cleanup": "deleted 2 test bookings (and their transactions and receipts)"
+}

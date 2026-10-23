@@ -32,55 +32,100 @@ async function issueReceipt(transactionId) {
     return { id, receiptNumber };
 }
 
+// A pending attempt older than this is treated as abandoned (e.g. the server
+// stopped mid-payment) and marked failed, so it can't block the booking forever.
+const STALE_PENDING_MINUTES = 2;
+
 async function initiatePayment({ bookingId, studentId, provider, msisdn }) {
-    const [bookingRows] = await db.promise().query("SELECT * FROM bookings WHERE id = ?", [bookingId]);
-    if (!bookingRows.length) {
-        throw new PaymentError("Booking not found.");
-    }
-    const booking = bookingRows[0];
+    // ---- Step 1: validate and record a 'pending' attempt, under a lock ----
+    // Concurrency: without this, simultaneous requests could all pass the
+    // "already paid?" check and all charge the student. Locking the booking
+    // row (SELECT ... FOR UPDATE) makes concurrent payment requests for the
+    // same booking run one at a time; the database's unique constraint
+    // uq_one_active_payment_per_booking (migration 006) is a second guarantee.
+    const conn = await db.promise().getConnection();
+    let booking, transactionId, amount;
+    try {
+        await conn.beginTransaction();
 
-    if (booking.student_id !== studentId) {
-        throw new PaymentError("This booking doesn't belong to you.");
-    }
-    // A tutor may mark a session completed before the student has paid,
-    // so completed bookings stay payable too.
-    if (booking.status !== "confirmed" && booking.status !== "completed") {
-        throw new PaymentError("You can only pay once the tutor has confirmed this booking.");
+        const [bookingRows] = await conn.query("SELECT * FROM bookings WHERE id = ? FOR UPDATE", [bookingId]);
+        if (!bookingRows.length) {
+            throw new PaymentError("Booking not found.");
+        }
+        booking = bookingRows[0];
+
+        if (booking.student_id !== studentId) {
+            throw new PaymentError("This booking doesn't belong to you.");
+        }
+        // A tutor may mark a session completed before the student has paid,
+        // so completed bookings stay payable too. Pending and cancelled
+        // bookings can never be paid.
+        if (booking.status !== "confirmed" && booking.status !== "completed") {
+            throw new PaymentError("You can only pay once the tutor has confirmed this booking.");
+        }
+
+        // Abandoned in-progress attempts no longer block the booking
+        await conn.query(
+            `UPDATE transactions SET status = 'failed', failure_reason = 'Timed out before the provider responded.'
+             WHERE booking_id = ? AND status = 'pending' AND created_at < NOW() - INTERVAL ? MINUTE`,
+            [bookingId, STALE_PENDING_MINUTES]
+        );
+
+        const [active] = await conn.query(
+            "SELECT status FROM transactions WHERE booking_id = ? AND status IN ('pending', 'completed')",
+            [bookingId]
+        );
+        if (active.some((t) => t.status === "completed")) {
+            throw new PaymentError("This booking has already been paid for.");
+        }
+        if (active.length) {
+            throw new PaymentError("A payment for this booking is already in progress. Please wait for it to finish.");
+        }
+
+        amount = bookingTotal(booking);
+        if (!(amount > 0)) {
+            throw new PaymentError("This booking has no price set, so it can't be paid for.");
+        }
+        const { platformFee, tutorPayout } = splitAmount(amount);
+        transactionId = uuidv4();
+
+        await conn.query(
+            `INSERT INTO transactions
+                (id, booking_id, student_id, tutor_id, provider, payer_msisdn, amount, platform_fee, tutor_payout, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+            [transactionId, bookingId, studentId, booking.tutor_id, provider, msisdn, amount, platformFee, tutorPayout]
+        );
+
+        await conn.commit();
+    } catch (err) {
+        await conn.rollback().catch(() => {});
+        // The unique constraint caught a second active payment
+        if (err.code === "ER_DUP_ENTRY") {
+            throw new PaymentError("A payment for this booking is already in progress or completed.");
+        }
+        throw err;
+    } finally {
+        conn.release();
     }
 
-    const [existing] = await db.promise().query(
-        "SELECT id FROM transactions WHERE booking_id = ? AND status = 'completed'",
-        [bookingId]
-    );
-    if (existing.length) {
-        throw new PaymentError("This booking has already been paid for.");
-    }
-
-    const amount = bookingTotal(booking);
-    if (!(amount > 0)) {
-        throw new PaymentError("This booking has no price set, so it can't be paid for.");
-    }
-    const { platformFee, tutorPayout } = splitAmount(amount);
-    const transactionId = uuidv4();
-
-    await db.promise().query(
-        `INSERT INTO transactions
-            (id, booking_id, student_id, tutor_id, provider, payer_msisdn, amount, platform_fee, tutor_payout, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
-        [transactionId, bookingId, studentId, booking.tutor_id, provider, msisdn, amount, platformFee, tutorPayout]
-    );
-
+    // ---- Step 2: charge (outside the lock, so a slow provider doesn't hold it) ----
     const result = await chargeMobileMoney({ provider, msisdn, amount });
 
     if (result.success) {
-        await db.promise().query(
-            `UPDATE transactions SET status = 'completed', momo_reference = ?, completed_at = NOW() WHERE id = ?`,
+        // Only the attempt that is still 'pending' can become 'completed', and
+        // only then is a receipt issued for it, so each receipt belongs to
+        // exactly one successful transaction.
+        const [upd] = await db.promise().query(
+            `UPDATE transactions SET status = 'completed', momo_reference = ?, completed_at = NOW()
+             WHERE id = ? AND status = 'pending'`,
             [result.reference, transactionId]
         );
-        await issueReceipt(transactionId);
+        if (upd.affectedRows === 1) {
+            await issueReceipt(transactionId);
+        }
     } else {
         await db.promise().query(
-            `UPDATE transactions SET status = 'failed', failure_reason = ? WHERE id = ?`,
+            `UPDATE transactions SET status = 'failed', failure_reason = ? WHERE id = ? AND status = 'pending'`,
             [result.reason, transactionId]
         );
     }

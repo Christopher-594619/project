@@ -1,0 +1,326 @@
+{
+  "api": "http://localhost:5093",
+  "database": "127.0.0.1:3307/tutor_finder_group",
+  "at": "2026-10-23T06:14:33.663Z",
+  "node": "v24.19.0",
+  "results": [
+    {
+      "id": "B1",
+      "name": "Server-side pricing ignores a tampered price",
+      "expected": "booking stored at the tutor's rate (K100.00/h), not the K1 sent",
+      "observed": {
+        "response": {
+          "status": 201,
+          "message": "Booking created successfully"
+        },
+        "databaseRow": {
+          "price": "100.00",
+          "duration": 90,
+          "status": "pending"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "B2",
+      "name": "Overlapping booking for the same tutor is rejected",
+      "expected": "409 clash; no second booking stored",
+      "observed": {
+        "response": {
+          "status": 409,
+          "message": "This tutor already has a session that clashes with your selected time. Please pick a slot at least 1 hour apart."
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "B3",
+      "name": "Booking in the past is rejected",
+      "expected": "400",
+      "observed": {
+        "response": {
+          "status": 400,
+          "message": "That time has already passed. Please choose a future date and time."
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "B4",
+      "name": "Pending booking cannot jump to completed",
+      "expected": "400",
+      "observed": {
+        "response": {
+          "status": 400,
+          "message": "Only confirmed bookings can be marked completed"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "B5",
+      "name": "Student cannot confirm a booking",
+      "expected": "403",
+      "observed": {
+        "response": {
+          "status": 403,
+          "message": "Students can only cancel bookings"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "S1",
+      "name": "Another student cannot pay for this booking",
+      "expected": "400 doesn't belong",
+      "observed": {
+        "response": {
+          "status": 400,
+          "message": "This booking doesn't belong to you."
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "S2",
+      "name": "A tutor cannot start a payment",
+      "expected": "403",
+      "observed": {
+        "response": {
+          "status": 403,
+          "message": "Only students can make payments."
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "S3",
+      "name": "No login token is rejected",
+      "expected": "401",
+      "observed": {
+        "response": {
+          "status": 401,
+          "message": "Not authenticated"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "P1",
+      "name": "Failed payment, then successful retry; failed attempt preserved",
+      "expected": "first attempt failed and kept; one completed attempt of K150.00 (fee 10%, payout 90%); one receipt linked to the completed attempt",
+      "observed": {
+        "firstAttempt": {
+          "status": 402,
+          "transaction": {
+            "id": "38968e2f-03c2-4cbb-b4aa-e72bf2128131",
+            "status": "failed",
+            "amount": "150.00",
+            "platform_fee": "15.00",
+            "tutor_payout": "135.00",
+            "failure_reason": "Insufficient funds."
+          }
+        },
+        "retry": {
+          "status": 201,
+          "transaction": {
+            "id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "status": "completed",
+            "amount": "150.00",
+            "platform_fee": "15.00",
+            "tutor_payout": "135.00",
+            "failure_reason": null,
+            "receipt_number": "RCPT-MVKKRF50-788"
+          }
+        },
+        "transactionsInDatabase": [
+          {
+            "id": "38968e2f-03c2-4cbb-b4aa-e72bf2128131",
+            "status": "failed",
+            "amount": "150.00",
+            "platform_fee": "15.00",
+            "tutor_payout": "135.00",
+            "failure_reason": "Insufficient funds."
+          },
+          {
+            "id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "status": "completed",
+            "amount": "150.00",
+            "platform_fee": "15.00",
+            "tutor_payout": "135.00",
+            "failure_reason": null
+          }
+        ],
+        "receiptsInDatabase": [
+          {
+            "receipt_number": "RCPT-MVKKRF50-788",
+            "transaction_id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "status": "completed"
+          }
+        ]
+      },
+      "passed": true
+    },
+    {
+      "id": "P2",
+      "name": "Second payment for a paid booking is rejected",
+      "expected": "400 already paid",
+      "observed": {
+        "response": {
+          "status": 400,
+          "message": "This booking has already been paid for."
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "S4",
+      "name": "Receipt is visible only to the student and tutor on the booking",
+      "expected": "other student 403; student 200; tutor 200",
+      "observed": {
+        "otherStudent": {
+          "status": 403,
+          "message": "Not authorized to view this transaction."
+        },
+        "student": {
+          "status": 200
+        },
+        "tutor": {
+          "status": 200
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "C1",
+      "name": "Database refuses a second active payment even if the code is bypassed",
+      "expected": "ER_DUP_ENTRY on uq_one_active_payment_per_booking",
+      "observed": {
+        "directInsert": "ER_DUP_ENTRY: Duplicate entry '1ffec28c-0a69-4d97-befa-42372e604356' for key 'uq_one_active_payment_per_booking'"
+      },
+      "passed": true
+    },
+    {
+      "id": "R1",
+      "name": "Review without a completed session is rejected",
+      "expected": "403",
+      "observed": {
+        "response": {
+          "status": 403,
+          "message": "You can review a tutor once they have completed a session with you"
+        },
+        "completedSessionsBeforeTest": 0
+      },
+      "passed": true
+    },
+    {
+      "id": "R2",
+      "name": "Review after completed session updates the stored average",
+      "expected": "201; stored rating/count equal the AVG/COUNT of the review rows",
+      "observed": {
+        "response": {
+          "status": 201,
+          "message": "Review submitted successfully"
+        },
+        "profileBefore": {
+          "rating": "5.00",
+          "reviews_count": 1
+        },
+        "profileAfter": {
+          "rating": "4.00",
+          "reviews_count": 2
+        },
+        "recomputedFromReviews": {
+          "n": 2,
+          "a": "4.00"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "R3",
+      "name": "Second review of the same tutor is rejected",
+      "expected": "409",
+      "observed": {
+        "response": {
+          "status": 409,
+          "message": "You have already reviewed this tutor"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "R4",
+      "name": "Rating outside 1-5 is rejected",
+      "expected": "400",
+      "observed": {
+        "response": {
+          "status": 400,
+          "message": "Rating must be between 1 and 5"
+        }
+      },
+      "passed": true
+    },
+    {
+      "id": "K1",
+      "name": "Cancelled booking: cannot be paid or changed, and its slot is free again",
+      "expected": "cancel 200; pay 400; same slot re-booked 201; changing the cancelled booking 400",
+      "observed": {
+        "cancel": {
+          "status": 200,
+          "message": "Booking updated successfully"
+        },
+        "payCancelled": {
+          "status": 400,
+          "message": "You can only pay once the tutor has confirmed this booking."
+        },
+        "rebookSameSlot": {
+          "status": 201,
+          "message": "Booking created successfully"
+        },
+        "changeCancelled": {
+          "status": 400,
+          "message": "Only pending bookings can be confirmed"
+        }
+      },
+      "passed": true
+    }
+  ],
+  "timings": {
+    "GET /api/tutors (list)": {
+      "requests": 20,
+      "minMs": 8,
+      "medianMs": 13,
+      "p95Ms": 19,
+      "maxMs": 20
+    },
+    "GET /api/bookings (own bookings)": {
+      "requests": 20,
+      "minMs": 20,
+      "medianMs": 31,
+      "p95Ms": 39,
+      "maxMs": 51
+    },
+    "POST /api/bookings (create)": {
+      "requests": 20,
+      "minMs": 17,
+      "medianMs": 27,
+      "p95Ms": 36,
+      "maxMs": 38
+    },
+    "POST /api/payments/initiate (incl. 600 ms simulated gateway delay)": {
+      "requests": 20,
+      "minMs": 635,
+      "medianMs": 659,
+      "p95Ms": 686,
+      "maxMs": 791
+    },
+    "GET /api/tutors/reviews/:tutorId": {
+      "requests": 20,
+      "minMs": 7,
+      "medianMs": 15,
+      "p95Ms": 20,
+      "maxMs": 22
+    }
+  }
+}

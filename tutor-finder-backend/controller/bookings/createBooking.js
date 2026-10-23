@@ -93,86 +93,88 @@ const createBooking = async (req, res) => {
             });
         }
 
-        // ===== Confirm tutor exists =====
-        // price is read here so the booking uses the tutor's real hourly rate,
-        // not whatever the browser sends.
-        const [tutorRows] = await db.promise().query(
-            "SELECT user_id, price, verified FROM tutor_profiles WHERE user_id = ? AND is_active = TRUE",
-            [tutorId]
-        );
-        if (tutorRows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Tutor not found",
-            });
-        }
-        // Only tutors verified by an admin can take bookings
-        if (!tutorRows[0].verified) {
-            return res.status(403).json({
-                success: false,
-                message: "This tutor has not been verified yet, so they can't take bookings.",
-            });
-        }
+        // ===== Check and insert inside one transaction =====
+        // Concurrency: two simultaneous requests could otherwise both run the
+        // clash check before either inserts, and both succeed (double
+        // booking). Locking the tutor's profile row (SELECT ... FOR UPDATE)
+        // makes concurrent bookings for the same tutor run one at a time:
+        // the second waits until the first has committed, then sees its
+        // booking in the clash check. Bookings for other tutors don't wait.
+        const conn = await db.promise().getConnection();
+        try {
+            await conn.beginTransaction();
+            const reject = async (status, message) => {
+                await conn.rollback();
+                return res.status(status).json({ success: false, message });
+            };
 
-        // ===== Check existing bookings for the same tutor + date =====
-        const [existing] = await db.promise().query(
-            `
-            SELECT id, time, duration
-            FROM bookings
-            WHERE tutor_id = ?
-              AND date = ?
-              AND status IN ('pending', 'confirmed')
-            `,
-            [tutorId, date]
-        );
-
-        // Compare each existing booking against the new one
-        for (const b of existing) {
-            const existingStart = toMinutes(b.time);
-            if (existingStart === null) continue;
-
-            const existingEnd = existingStart + (parseInt(b.duration, 10) || 0);
-
-            // Overlap check (with MIN_GAP_MINUTES buffer)
-            const gapBefore = newStart - existingEnd;      // new comes after existing
-            const gapAfter = existingStart - newEnd;       // new comes before existing
-
-            const overlaps =
-                newStart < existingEnd + MIN_GAP_MINUTES &&
-                existingStart < newEnd + MIN_GAP_MINUTES;
-
-            if (overlaps) {
-                return res.status(409).json({
-                    success: false,
-                    message:
-                        "This tutor already has a session that clashes with your selected time. Please pick a slot at least 1 hour apart.",
-                });
+            // Confirm tutor exists. The price is read here so the booking
+            // uses the tutor's real hourly rate, not what the browser sends.
+            const [tutorRows] = await conn.query(
+                "SELECT user_id, price, verified FROM tutor_profiles WHERE user_id = ? AND is_active = TRUE FOR UPDATE",
+                [tutorId]
+            );
+            if (tutorRows.length === 0) {
+                return reject(404, "Tutor not found");
             }
+            // Only tutors verified by an admin can take bookings
+            if (!tutorRows[0].verified) {
+                return reject(403, "This tutor has not been verified yet, so they can't take bookings.");
+            }
+
+            // Existing active bookings for the same tutor and date. A locking
+            // read sees the latest committed rows, including ones committed
+            // by a request that held the lock just before this one.
+            const [existing] = await conn.query(
+                `
+                SELECT id, time, duration
+                FROM bookings
+                WHERE tutor_id = ?
+                  AND date = ?
+                  AND status IN ('pending', 'confirmed')
+                FOR UPDATE
+                `,
+                [tutorId, date]
+            );
+
+            // Overlap check, with a MIN_GAP_MINUTES buffer either side
+            for (const b of existing) {
+                const existingStart = toMinutes(b.time);
+                if (existingStart === null) continue;
+                const existingEnd = existingStart + (parseInt(b.duration, 10) || 0);
+
+                const overlaps =
+                    newStart < existingEnd + MIN_GAP_MINUTES &&
+                    existingStart < newEnd + MIN_GAP_MINUTES;
+
+                if (overlaps) {
+                    return reject(
+                        409,
+                        "This tutor already has a session that clashes with your selected time. Please pick a slot at least 1 hour apart."
+                    );
+                }
+            }
+
+            // The tutor's current hourly rate, snapshotted onto the booking.
+            const totalPrice = parseFloat(tutorRows[0].price) || 0;
+
+            await conn.query(
+                `
+                INSERT INTO bookings
+                (id, student_id, tutor_id, subject, date, time, duration, notes, price, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+                `,
+                [id, studentId, tutorId, subject, date, time, durationInt, notes || null, totalPrice]
+            );
+
+            await conn.commit();
+        } catch (err) {
+            await conn.rollback().catch(() => {});
+            throw err;
+        } finally {
+            conn.release();
         }
-
-        // ===== Insert =====
-        // The tutor's current hourly rate, snapshotted onto the booking.
-        // A price in the request body is ignored so it can't be tampered with.
-        const totalPrice = parseFloat(tutorRows[0].price) || 0;
-
-        await db.promise().query(
-            `
-            INSERT INTO bookings
-            (id, student_id, tutor_id, subject, date, time, duration, notes, price, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
-            `,
-            [
-                id,
-                studentId,
-                tutorId,
-                subject,
-                date,
-                time,
-                durationInt,
-                notes || null,
-                totalPrice,
-            ]
-        );
+        if (res.headersSent) return; // rejected inside the transaction
 
         // ===== Fetch back with names =====
         const [rows] = await db.promise().query(

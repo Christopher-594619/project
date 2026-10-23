@@ -1,0 +1,29 @@
+{
+  "label": "before-fix",
+  "api": "http://localhost:5091",
+  "simultaneousRequests": 10,
+  "at": "2026-10-23T06:11:13.076Z",
+  "booking": {
+    "description": "10 simultaneous requests for the same tutor, date and time",
+    "expected": "exactly 1 booking created, the rest rejected as a clash",
+    "responses": {
+      "201 Booking created successfully": 2,
+      "409 This tutor already has a session that clashes with your selected time. Please pick a slot at least 1 hour apart.": 8
+    },
+    "bookingsInDatabase": 2,
+    "passed": false
+  },
+  "payment": {
+    "description": "10 simultaneous payment requests for one confirmed booking",
+    "expected": "at most 1 completed transaction and at most 1 receipt",
+    "responses": {
+      "201 completed": 10
+    },
+    "transactionsInDatabase": {
+      "completed": 10
+    },
+    "receiptsInDatabase": 10,
+    "passed": false
+  },
+  "cleanup": "deleted 3 test bookings (and their transactions and receipts)"
+}
