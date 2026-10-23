@@ -72,25 +72,19 @@ const addReview = async (req, res) => {
             [id, tutorId, studentId, r, comment.trim() || null]
         );
 
-        // Recalculate tutor rating + reviews_count
-        const [[stats]] = await db.promise().query(
-            `
-            SELECT
-                COUNT(*) AS count,
-                COALESCE(AVG(rating), 0) AS avg
-            FROM reviews
-            WHERE tutor_id = ?
-            `,
-            [tutorId]
-        );
-
+        // Recalculate tutor rating + reviews_count from all of the tutor's
+        // review rows, in ONE statement. Calculating in one query and saving
+        // in another could let an older result overwrite a newer one when two
+        // reviews arrive together; a single UPDATE reads the current rows
+        // when it runs, so the stored values always match the reviews.
         await db.promise().query(
             `
             UPDATE tutor_profiles
-            SET rating = ?, reviews_count = ?
+            SET rating = (SELECT ROUND(COALESCE(AVG(r.rating), 0), 2) FROM reviews r WHERE r.tutor_id = ?),
+                reviews_count = (SELECT COUNT(*) FROM reviews r WHERE r.tutor_id = ?)
             WHERE user_id = ?
             `,
-            [Number(stats.avg).toFixed(2), stats.count, tutorId]
+            [tutorId, tutorId, tutorId]
         );
 
         // Return the newly created review (with student info)

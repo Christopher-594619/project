@@ -106,7 +106,7 @@ const record = (id, name, expected, observed, passed) => {
         record("P1", "Failed payment, then successful retry; failed attempt preserved",
             `first attempt failed and kept; one completed attempt of K${expectedAmount.toFixed(2)} (fee 10%, payout 90%); one receipt linked to the completed attempt`,
             { firstAttempt: brief(p1), retry: brief(p2), transactionsInDatabase: txRows, receiptsInDatabase: rcRows },
-            txRows[0]?.status === "failed" && txRows.filter((t) => t.status === "completed").length === 1
+            txRows.some((t) => t.id === p1.body?.transaction?.id && t.status === "failed") && txRows.filter((t) => t.status === "completed").length === 1
             && Number(done?.amount) === expectedAmount
             && Number(done?.platform_fee) === Math.round(expectedAmount * 0.1 * 100) / 100
             && Math.abs(Number(done.platform_fee) + Number(done.tutor_payout) - Number(done.amount)) < 0.001

@@ -1,7 +1,7 @@
 {
-  "api": "http://localhost:5093",
+  "api": "http://localhost:5096",
   "database": "127.0.0.1:3307/tutor_finder_group",
-  "at": "2026-10-23T06:14:33.663Z",
+  "at": "2026-10-23T06:16:50.229Z",
   "node": "v24.19.0",
   "results": [
     {
@@ -113,7 +113,7 @@
         "firstAttempt": {
           "status": 402,
           "transaction": {
-            "id": "38968e2f-03c2-4cbb-b4aa-e72bf2128131",
+            "id": "0ad14f29-9ca6-4458-99a2-1a1d695aab07",
             "status": "failed",
             "amount": "150.00",
             "platform_fee": "15.00",
@@ -124,18 +124,18 @@
         "retry": {
           "status": 201,
           "transaction": {
-            "id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "id": "2da19da1-d9c2-46a2-89d8-2d9b08ace789",
             "status": "completed",
             "amount": "150.00",
             "platform_fee": "15.00",
             "tutor_payout": "135.00",
             "failure_reason": null,
-            "receipt_number": "RCPT-MVKKRF50-788"
+            "receipt_number": "RCPT-MVKKUCNW-785"
           }
         },
         "transactionsInDatabase": [
           {
-            "id": "38968e2f-03c2-4cbb-b4aa-e72bf2128131",
+            "id": "0ad14f29-9ca6-4458-99a2-1a1d695aab07",
             "status": "failed",
             "amount": "150.00",
             "platform_fee": "15.00",
@@ -143,7 +143,7 @@
             "failure_reason": "Insufficient funds."
           },
           {
-            "id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "id": "2da19da1-d9c2-46a2-89d8-2d9b08ace789",
             "status": "completed",
             "amount": "150.00",
             "platform_fee": "15.00",
@@ -153,8 +153,8 @@
         ],
         "receiptsInDatabase": [
           {
-            "receipt_number": "RCPT-MVKKRF50-788",
-            "transaction_id": "852ec806-50ca-4c68-a573-55dcd0541e09",
+            "receipt_number": "RCPT-MVKKUCNW-785",
+            "transaction_id": "2da19da1-d9c2-46a2-89d8-2d9b08ace789",
             "status": "completed"
           }
         ]
@@ -196,7 +196,7 @@
       "name": "Database refuses a second active payment even if the code is bypassed",
       "expected": "ER_DUP_ENTRY on uq_one_active_payment_per_booking",
       "observed": {
-        "directInsert": "ER_DUP_ENTRY: Duplicate entry '1ffec28c-0a69-4d97-befa-42372e604356' for key 'uq_one_active_payment_per_booking'"
+        "directInsert": "ER_DUP_ENTRY: Duplicate entry '037dbe17-b661-4307-9f1c-17ad2981b434' for key 'uq_one_active_payment_per_booking'"
       },
       "passed": true
     },
@@ -290,37 +290,37 @@
     "GET /api/tutors (list)": {
       "requests": 20,
       "minMs": 8,
-      "medianMs": 13,
-      "p95Ms": 19,
-      "maxMs": 20
+      "medianMs": 10,
+      "p95Ms": 24,
+      "maxMs": 25
     },
     "GET /api/bookings (own bookings)": {
       "requests": 20,
-      "minMs": 20,
-      "medianMs": 31,
-      "p95Ms": 39,
-      "maxMs": 51
+      "minMs": 22,
+      "medianMs": 32,
+      "p95Ms": 45,
+      "maxMs": 55
     },
     "POST /api/bookings (create)": {
       "requests": 20,
-      "minMs": 17,
-      "medianMs": 27,
-      "p95Ms": 36,
-      "maxMs": 38
+      "minMs": 18,
+      "medianMs": 26,
+      "p95Ms": 33,
+      "maxMs": 37
     },
     "POST /api/payments/initiate (incl. 600 ms simulated gateway delay)": {
       "requests": 20,
-      "minMs": 635,
-      "medianMs": 659,
-      "p95Ms": 686,
-      "maxMs": 791
+      "minMs": 633,
+      "medianMs": 658,
+      "p95Ms": 666,
+      "maxMs": 675
     },
     "GET /api/tutors/reviews/:tutorId": {
       "requests": 20,
-      "minMs": 7,
-      "medianMs": 15,
-      "p95Ms": 20,
-      "maxMs": 22
+      "minMs": 4,
+      "medianMs": 9,
+      "p95Ms": 19,
+      "maxMs": 21
     }
   }
 }
